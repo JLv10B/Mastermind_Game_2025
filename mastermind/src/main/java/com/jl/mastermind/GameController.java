@@ -1,5 +1,7 @@
 package com.jl.mastermind;
 
+import java.net.URISyntaxException;
+
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -10,8 +12,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 @Controller
 public class GameController {
     @RequestMapping("/")
-    public String home(Model model) {
-        model.addAttribute("name", "Timmy");
+    public String home(Model model) throws URISyntaxException {
+        model.addAttribute("name", GameService.randomPatternGenerator());
         return "index";
     }
 

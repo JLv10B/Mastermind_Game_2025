@@ -12,7 +12,7 @@ public class GameController {
     @RequestMapping("/")
     public String home(Model model) {
         model.addAttribute("name", "Timmy");
-        return "index.html";
+        return "index";
     }
 
     @RequestMapping("/create-game")

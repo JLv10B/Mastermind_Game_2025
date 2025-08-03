@@ -1,0 +1,297 @@
+openapi: '3.0.3'
+info:
+  title: API Title
+  version: '1.0'
+servers:
+  - url: https://localhost:8080
+    description: Local dev server
+
+tags:
+  - name: Players
+    description: Player management operations
+  - name: Rooms
+    description: Game room management operations
+  - name: Player Guess
+    description: Player guess management operations
+
+paths:
+  /players:
+    get:
+      summary: Returns all players
+      description: Returns all players in JSON
+      tags:
+        - Players
+      responses:
+        '200':
+          description: Players found successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Player'
+        '404':
+          description: No players found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetails'
+        '500':
+          description: Server error, unable to return players
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetails'
+  /players/{username}:
+    get:
+      summary: Retrieves a player by username
+      description: Returns the player details for a given unique username.
+      tags:
+        - Players
+      parameters:
+        - name: username
+          in: path
+          description: The username of the player to retrieve.
+          required: true
+          schema:
+            type: string
+          example: 'john_doe'
+      responses:
+        '200':
+          description: Player found by username successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Player'
+        '404':
+          description: Player not found with the given username
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetails'
+        '500':
+          description: Server error, unable to return players
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetails'
+  /players/create-player:
+    post:
+      summary: Creates a new player
+      description: Creates a new player with a unique username
+      tags:
+        - Players
+      requestBody:
+        description: Player object to be created.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Player'
+      responses:
+        '201':
+          description: Player created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Player'
+        '400':
+          description: Invalid player data provided
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetails'
+        '409':
+          description: A player with specified username already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetails'
+  /rooms:
+    get:
+      summary: Returns all rooms
+      description: Returns all rooms
+      tags:
+        - Rooms
+      responses:
+        '200':
+          description: Rooms found successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Room'
+        '404':
+          description: No rooms found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetails'
+        '500':
+          description: Server error, unable to return rooms
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetails'
+  /rooms/{roomName}:
+    get:
+      summary: Returns a single room by room name
+      description: Returns room with specified room name
+      tags:
+        - Rooms
+      responses:
+        '200':
+          description: Room found successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Room'
+        '404':
+          description: Room with speficied room name not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetails'
+        '500':
+          description: Server error, unable to return room
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetails'
+  /rooms/create-room:
+    post:
+      summary: Creates a new room
+      description: Creates a new room
+      tags:
+        - Rooms
+      requestBody:
+        description: Room object to be created.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Room'
+      responses:
+        '201':
+          description: Room created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Room'
+        '400':
+          description: Invalid room data provided
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetails'
+        '409':
+          description: A room with specified roomName already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetails'
+  /rooms/{roomName}/join:
+    put:
+      summary: Adds a player to a room
+      description: Adds a specified player to the participants of an existing room
+      tags:
+        - Room
+      requestBody:
+        description: Player object
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Player'
+      responses:
+        '201':
+          description: Player successfully added to the room
+        
+
+
+
+components:
+  schemas:
+    Player:
+      type: object
+      properties:
+        username:
+          type: string
+          description: The player's unique username.
+          example: "John123"
+      required:
+        - username
+    Room:
+      type: object
+      properties:
+        roomName:
+          type: string
+          description: The room's unique name.
+          example: "John123's room"
+        host:
+          type: object
+          description: The room's creator represented by their Player object.
+          example: Player "John123"
+        difficulty:
+          type: integer
+          description: How many digits are generated for the mastercode.
+          example: 4
+        maxGuesses:
+          type: integer
+          description: Maximum amount of guesses a player can make before the game ends
+          example: 12
+        closed:
+          type: boolean
+          description: A boolean that determines whether players can join the room. If closed is false, players cannot join the room. If closed is true players can join the room.
+        started:
+          type: boolean
+          description: A boolean that determines whether players can submit guesses. If started is false, players cannot submit guesses. If started is true players can submit guesses and closed will also be set to true as once the room starts no players are allowed to join the room.
+        mastercode:
+          type: array
+          description: A list of strings that the players are trying to guesses.
+          example: ['1', '2', '3', '4']
+        participants:
+          type: object
+          description: A map of players in the room, keyed by their username.
+          additionalProperties: 
+            $ref: '#/components/schemas/Player'
+          example:
+            john123:
+              username: "John123"
+            jane123:
+              username: "jane123"
+      required:
+        - roomName
+        - host
+        - difficulty
+        - closed
+        - started
+        - mastercode
+        - participants
+    PlayerGuess:
+      properties:
+        guessNumber:
+          type: integer
+          description: The unique identifier for the player's guess, also tracks how many guesses the player has submitted for that game.
+          example: 3
+        player:
+          type: object
+          description: The player who submitted the guesses.
+          additionalProperties:
+            $ref: '#/components/schemas/Player'
+          example:
+            john123:
+              username: "John123"
+        guess:
+          type: array
+          description: A list of strings that the players are trying to match to the room's mastercode.
+          example: ['1', '2', '3', '4']
+        
+    ErrorDetails:
+      type: object
+      properties:
+        message:
+          type: string
+          description: A human-readable error message.
+          example: 'username not found'
+
+
+
+        

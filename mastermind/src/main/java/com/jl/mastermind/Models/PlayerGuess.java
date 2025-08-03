@@ -5,14 +5,11 @@ public class PlayerGuess {
     private int guessNumber;
     private Player player;
     private String guess;
-    private int matchingNumbers;
-    private int exactMatches;
     
-    public PlayerGuess(Player player, String guess, int matchingNumbers, int exactMatches) {
+    public PlayerGuess(Player player, String guess) {
         this.player = player;
         this.guess = guess;
-        this.matchingNumbers = matchingNumbers;
-        this.exactMatches = exactMatches;
+
     }
 
     public Player getPlayer() {
@@ -29,22 +26,6 @@ public class PlayerGuess {
 
     public void setGuess(String guess) {
         this.guess = guess;
-    }
-
-    public int getMatchingNumbers() {
-        return matchingNumbers;
-    }
-
-    public void setMatchingNumbers(int matchingNumbers) {
-        this.matchingNumbers = matchingNumbers;
-    }
-
-    public int getExactMatches() {
-        return exactMatches;
-    }
-
-    public void setExactMatches(int exactMatches) {
-        this.exactMatches = exactMatches;
     }
 
 

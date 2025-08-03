@@ -25,7 +25,7 @@ public class APIController {
     @RequestMapping("/feedback")
     public PlayerGuess feedback() {
         Player player = new Player("Timmy");
-        return new PlayerGuess(player,"1234", 1, 1);
+        return new PlayerGuess(player,"1234");
     }
     
 }

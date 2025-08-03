@@ -1,4 +1,4 @@
-package com.jl.mastermind;
+package com.jl.mastermind.Controllers;
 
 import java.net.URISyntaxException;
 
@@ -7,6 +7,8 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
+
+import com.jl.mastermind.GameService;
 
 
 @Controller

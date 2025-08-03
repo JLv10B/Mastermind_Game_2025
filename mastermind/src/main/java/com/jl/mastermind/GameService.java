@@ -25,14 +25,14 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class GameService {
-    private String masterCode;
-    private final int CODE_LENGTH = 4;
+    
 
     public GameService() throws URISyntaxException {
-        this.masterCode = randomPatternGenerator();
+
     }
 
     public static String randomPatternGenerator() throws URISyntaxException {
+        String masterCode;
         HttpURLConnection connection = null;
         DataOutputStream outputStream = null;
         BufferedReader reader = null;
@@ -118,7 +118,4 @@ public class GameService {
 
     }
 
-    public String getMasterCode() {
-        return masterCode;
-    }
 }

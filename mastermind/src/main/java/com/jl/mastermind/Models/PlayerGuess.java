@@ -1,6 +1,8 @@
-package com.jl.mastermind.Entities;
+package com.jl.mastermind.Models;
+
 
 public class PlayerGuess {
+    private int guessNumber;
     private Player player;
     private String guess;
     private int matchingNumbers;

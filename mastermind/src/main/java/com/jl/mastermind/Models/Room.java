@@ -1,8 +1,9 @@
-package com.jl.mastermind.Entities;
+package com.jl.mastermind.Models;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Room {
     private int roomId;

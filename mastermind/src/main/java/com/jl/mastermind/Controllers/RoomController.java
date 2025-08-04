@@ -44,8 +44,8 @@ public class RoomController {
     }
 
     @DeleteMapping("/{roomName}")
-    public ResponseEntity<String> deleteRoom(@PathVariable String roomName) {
-        if (roomService.deleteRoom(roomName) == true) {
+    public ResponseEntity<String> deleteRoom(@PathVariable String roomName, HttpSession session) {
+        if (roomService.deleteRoom(roomName, session) == true) {
             return ResponseEntity.noContent().build();
         } else {
             return ResponseEntity.internalServerError().build();
@@ -65,15 +65,15 @@ public class RoomController {
 
     }
 
-    // @PostMapping("/{roomName}/Participants")
-    // public ResponseEntity<Map> addParticipant(@PathVariable String roomName, @RequestBody String joiningPlayerUsername) {
-    //     Optional<Room> roomOptional = roomRepository.findByRoomName(roomName.toLowerCase());
-    //     if (roomOptional.isPresent()) {
-    //         Room updatedRoom = roomOptional.get();
-    //         updatedRoom = roomRepository.updateRoom(roomName, roomUpdate, updatedRoom);
-    //         return ResponseEntity.ok(updatedRoom);
-    //     } else {
-    //         throw new ResourceNotFoundException(roomName + " not found");
-    //     } 
-    // }
+    @PostMapping("/{roomName}/participants")
+    public ResponseEntity<Room> addParticipant(@PathVariable String roomName, @RequestBody String playerUsername) {
+        Room updatedRoom = roomService.addParticipant(roomName, playerUsername);
+        return ResponseEntity.status(HttpStatus.CREATED).body(updatedRoom);
+    }
+
+    @DeleteMapping("/{roomName}/participants")
+    public ResponseEntity<Room> removeParticipant(@PathVariable String roomName, @RequestBody String playerUsername) {
+        Room updatedRoom = roomService.removeParticipant(roomName, playerUsername);
+        return ResponseEntity.status(HttpStatus.CREATED).body(updatedRoom);
+    }
 }

@@ -28,4 +28,9 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatusCode.valueOf(404)).body(e.getMessage());
     }
 
+    @ExceptionHandler({InsufficientPermissionsException.class})
+    public ResponseEntity<Object> handleNInsufficientPermissionsException(InsufficientPermissionsException e) {
+        return ResponseEntity.status(HttpStatusCode.valueOf(403)).body(e.getMessage());
+    }
+
 }

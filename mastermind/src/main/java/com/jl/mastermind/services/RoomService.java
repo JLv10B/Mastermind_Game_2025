@@ -16,13 +16,17 @@ import java.util.Optional;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import com.jl.mastermind.dto.RoomCreationDTO;
 import com.jl.mastermind.dto.RoomUpdateDTO;
 import com.jl.mastermind.entities.Player;
 import com.jl.mastermind.entities.PlayerGuess;
 import com.jl.mastermind.entities.Room;
+import com.jl.mastermind.exceptions.InsufficientPermissionsException;
 import com.jl.mastermind.exceptions.NoUserFoundException;
 import com.jl.mastermind.exceptions.ResourceNotFoundException;
 import com.jl.mastermind.exceptions.RoomNameAlreadyExistsException;
@@ -55,10 +59,16 @@ public class RoomService {
         }
     }
 
-    public boolean deleteRoom(String roomName) {
+    public boolean deleteRoom(String roomName, HttpSession session) {
         Optional<Room> roomOptional = roomRepository.findByRoomName(roomName.toLowerCase());
         if (roomOptional.isPresent()) {
-            return roomRepository.deleteRoom(roomName.toLowerCase());
+            String clientUsernameLower = session.getAttribute("username").toString().toLowerCase();
+            String hostUsernameLower = roomOptional.get().getHost().getUsername().toLowerCase();
+            if (clientUsernameLower == hostUsernameLower) {
+                return roomRepository.deleteRoom(roomName.toLowerCase());
+            } else {
+                throw new InsufficientPermissionsException("Insufficient permissions to perform this request");
+            }
         } else {
             throw new ResourceNotFoundException(roomName + " not found");
         }
@@ -121,6 +131,31 @@ public class RoomService {
             } else {
                 throw new ResourceNotFoundException(newRoom.getRoomName() + " not found");
             }
+        } 
+    }
+
+    public Room addParticipant(String roomName, String playerUsername) {
+        Optional<Room> roomOptional = roomRepository.findByRoomName(roomName.toLowerCase());
+        if (!roomOptional.isPresent()) {
+            throw new ResourceNotFoundException(roomName + " not found");
+        } else {
+            Room room = roomOptional.get();
+            Map<String, List<PlayerGuess>> participants = room.getParticipants();
+            List<PlayerGuess> guessList = new ArrayList<>();
+            participants.put(playerUsername, guessList);
+            return room;
+        } 
+    }
+
+    public Room removeParticipant(String roomName, String playerUsername) {
+        Optional<Room> roomOptional = roomRepository.findByRoomName(roomName.toLowerCase());
+        if (!roomOptional.isPresent()) {
+            throw new ResourceNotFoundException(roomName + " not found");
+        } else {
+            Room room = roomOptional.get();
+            Map<String, List<PlayerGuess>> participants = room.getParticipants();
+            participants.remove(playerUsername);
+            return room;
         } 
     }
 

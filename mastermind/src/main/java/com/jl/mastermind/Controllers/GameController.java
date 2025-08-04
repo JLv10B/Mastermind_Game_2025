@@ -5,8 +5,6 @@ import java.net.URISyntaxException;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
 
 import com.jl.mastermind.GameService;
 
@@ -14,8 +12,7 @@ import com.jl.mastermind.GameService;
 @Controller
 public class GameController {
     @RequestMapping("/")
-    public String home(Model model) throws URISyntaxException {
-        model.addAttribute("name", GameService.randomPatternGenerator());
+    public String home() {
         return "index";
     }
 

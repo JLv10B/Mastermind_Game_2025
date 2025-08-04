@@ -1,6 +1,8 @@
 package com.jl.mastermind.Models;
 
+import lombok.Data;
 
+@Data
 public class PlayerGuess {
     private int guessNumber;
     private Player player;
@@ -10,22 +12,6 @@ public class PlayerGuess {
         this.player = player;
         this.guess = guess;
 
-    }
-
-    public Player getPlayer() {
-        return player;
-    }
-
-    public void setPlayer(Player player) {
-        this.player = player;
-    }
-
-    public String getGuess() {
-        return guess;
-    }
-
-    public void setGuess(String guess) {
-        this.guess = guess;
     }
 
 

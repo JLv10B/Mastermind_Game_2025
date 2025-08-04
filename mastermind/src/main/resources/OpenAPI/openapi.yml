@@ -17,7 +17,6 @@ tags:
 paths:
   /players:
     get:
-      summary: Returns all players
       description: Returns all players in JSON
       tags:
         - Players
@@ -42,7 +41,6 @@ paths:
                 $ref: '#/components/schemas/ErrorDetails'
   /players/{username}:
     get:
-      summary: Retrieves a player by username
       description: Returns the player details for a given unique username.
       tags:
         - Players
@@ -67,15 +65,36 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorDetails'
+    delete:
+      operationId: deletePlayer
+      description: Deletes a player
+      tags:
+        - Rooms
+      parameters:
+        - name: roomName
+          in: path
+          description: The unique name of the room to delete.
+          required: true
+          schema:
+            type: string
+          example: "room1"
+      responses:
+        '204':
+          description: Room deleted successfully
+        '404':
+          description: Room not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetails'
         '500':
-          description: Server error, unable to return players
+          description: Server error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorDetails'
   /players/create-player:
     post:
-      summary: Creates a new player
       description: Creates a new player with a unique username
       tags:
         - Players
@@ -107,7 +126,6 @@ paths:
                 $ref: '#/components/schemas/ErrorDetails'
   /rooms:
     get:
-      summary: Returns all rooms
       description: Returns all rooms
       tags:
         - Rooms
@@ -132,7 +150,6 @@ paths:
                 $ref: '#/components/schemas/ErrorDetails'
   /rooms/{roomName}:
     get:
-      summary: Returns a single room by room name
       description: Returns room with specified room name
       tags:
         - Rooms
@@ -149,15 +166,70 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorDetails'
-        '500':
-          description: Server error, unable to return room
+    delete:
+      operationId: deleteRoom
+      description: Deletes a room with the specified room name
+      tags:
+        - Rooms
+      parameters:
+        - name: roomName
+          in: path
+          description: The unique name of the room to delete.
+          required: true
+          schema:
+            type: string
+          example: "room1"
+      responses:
+        '204':
+          description: Room deleted successfully
+        '404':
+          description: Room not found
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorDetails'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetails'
+    patch:
+      operationId: updateRoom
+      description: Partially updates a room
+      tags:
+        - Rooms
+      parameters:
+        - name: roomName
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "room1"
+      requestBody:
+        description: RoomUpdate object
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoomUpdate'
+      responses:
+        '200':
+          description: Room updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetails'
+        '404':
+          description: Room not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetails'
+
+    
   /rooms/create-room:
     post:
-      summary: Creates a new room
       description: Creates a new room
       tags:
         - Rooms
@@ -187,12 +259,19 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorDetails'
-  /rooms/{roomName}/join:
-    put:
-      summary: Adds a player to a room
-      description: Adds a specified player to the participants of an existing room
+  /rooms/{roomName}/participants:
+    post:
+      description: Adds the specified player to the participants of an existing room
       tags:
         - Room
+      parameters: 
+        - name: roomName
+          in: path
+          description: The unique name of the room to join.
+          required: true
+          schema:
+            type: string
+          example: "room1"
       requestBody:
         description: Player object
         required: true
@@ -201,10 +280,68 @@ paths:
             schema:
               $ref: '#/components/schemas/Player'
       responses:
-        '201':
+        '200':
           description: Player successfully added to the room
-        
-
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Room'
+        '400':
+          description: Invalid player data provided
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetails'
+        '404':
+          description: Room not found with the given room name
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetails'
+        '409':
+          description: The player is already a participant in the room
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetails'
+    delete:
+      description: Removes the specified player from the participants of an existing room
+      tags:
+        - Room
+      parameters: 
+        - name: roomName
+          in: path
+          description: The unique name of the room to leave.
+          required: true
+          schema:
+            type: string
+          example: "room1"
+      requestBody:
+        description: Player object
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Player'
+      responses:
+        '200':
+          description: Player successfully removed from the room
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Room'
+        '400':
+          description: Invalid player data provided
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetails'
+        '404':
+          description: Room not found with the given room name
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetails'
 
 
 components:
@@ -218,6 +355,7 @@ components:
           example: "John123"
       required:
         - username
+
     Room:
       type: object
       properties:
@@ -265,6 +403,27 @@ components:
         - started
         - mastercode
         - participants
+    
+    RoomUpdate:
+      properties:
+        difficulty:
+          type: integer
+          description: How many digits are generated for the mastercode.
+          example: 4
+        maxGuesses:
+          type: integer
+          description: Maximum amount of guesses a player can make before the game ends
+          example: 12
+        closed:
+          type: boolean
+          description: A boolean that determines whether players can join the room. If closed is false, players cannot join the room. If closed is true players can join the room.
+        started:
+          type: boolean
+          description: A boolean that determines whether players can submit guesses. If started is false, players cannot submit guesses. If started is true players can submit guesses and closed will also be set to true as once the room starts no players are allowed to join the room.
+        mastercode:
+          type: boolean
+          description: A boolean that determines whether the mastercode is reset. If true the mastercode is reset.
+
     PlayerGuess:
       properties:
         guessNumber:

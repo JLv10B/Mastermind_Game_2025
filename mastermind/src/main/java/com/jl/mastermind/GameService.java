@@ -31,91 +31,91 @@ public class GameService {
 
     }
 
-    public static String randomPatternGenerator() throws URISyntaxException {
-        String masterCode;
-        HttpURLConnection connection = null;
-        DataOutputStream outputStream = null;
-        BufferedReader reader = null;
-        StringBuilder response = new StringBuilder();
-        int difficulty = 4;
-        String returncode = "";
+    // public static String randomPatternGenerator() throws URISyntaxException {
+    //     String masterCode;
+    //     HttpURLConnection connection = null;
+    //     DataOutputStream outputStream = null;
+    //     BufferedReader reader = null;
+    //     StringBuilder response = new StringBuilder();
+    //     int difficulty = 4;
+    //     String returncode = "";
         
-        try {
-            URI uri = new URI("https://api.random.org/json-rpc/4/invoke");
-            URL url = uri.toURL();
-            connection = (HttpURLConnection) url.openConnection();
-            connection.setRequestMethod("POST");
-            connection.setDoOutput(true);
-            connection.setRequestProperty("Content-Type", "application/json");
-            connection.setRequestProperty("Accept", "application/json");
-            connection.setRequestProperty("User-Agent", "Mastermind Server");
+    //     try {
+    //         URI uri = new URI("https://api.random.org/json-rpc/4/invoke");
+    //         URL url = uri.toURL();
+    //         connection = (HttpURLConnection) url.openConnection();
+    //         connection.setRequestMethod("POST");
+    //         connection.setDoOutput(true);
+    //         connection.setRequestProperty("Content-Type", "application/json");
+    //         connection.setRequestProperty("Accept", "application/json");
+    //         connection.setRequestProperty("User-Agent", "Mastermind Server");
 
-            String jsonPayLoad = String.format("""
-                {
-                    "jsonrpc": "2.0",
-                    "method": "generateIntegers",
-                    "params": {
-                        "apiKey": "6802e62a-b150-4821-ab25-8f0c637480fb",
-                        "n": %d,
-                        "min": 0,
-                        "max": 7,
-                        "replacement": false
-                    },
-                    "id": 1
-                }
-                """, difficulty);
+    //         String jsonPayLoad = String.format("""
+    //             {
+    //                 "jsonrpc": "2.0",
+    //                 "method": "generateIntegers",
+    //                 "params": {
+    //                     "apiKey": "6802e62a-b150-4821-ab25-8f0c637480fb",
+    //                     "n": %d,
+    //                     "min": 0,
+    //                     "max": 7,
+    //                     "replacement": false
+    //                 },
+    //                 "id": 1
+    //             }
+    //             """, difficulty);
 
-            outputStream = new DataOutputStream(connection.getOutputStream());
-            outputStream.writeBytes(jsonPayLoad);
-            outputStream.flush();
+    //         outputStream = new DataOutputStream(connection.getOutputStream());
+    //         outputStream.writeBytes(jsonPayLoad);
+    //         outputStream.flush();
 
-            int responseCode = connection.getResponseCode();
+    //         int responseCode = connection.getResponseCode();
 
-            if (responseCode >= 200 && responseCode < 300) {
-                reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-                String line;
+    //         if (responseCode >= 200 && responseCode < 300) {
+    //             reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+    //             String line;
                 
-                while ((line = reader.readLine()) != null) {
-                    response.append(line);
-                }
+    //             while ((line = reader.readLine()) != null) {
+    //                 response.append(line);
+    //             }
 
-                System.out.println("Response Body:\n" + response.toString());
+    //             System.out.println("Response Body:\n" + response.toString());
 
-                try {
-                    JSONObject jsonObject = new JSONObject(response.toString());
-                    JSONObject result = jsonObject.getJSONObject("result");
-                    JSONObject random = result.getJSONObject("random");
-                    JSONArray mastercodeJSON = random.getJSONArray("data");
+    //             try {
+    //                 JSONObject jsonObject = new JSONObject(response.toString());
+    //                 JSONObject result = jsonObject.getJSONObject("result");
+    //                 JSONObject random = result.getJSONObject("random");
+    //                 JSONArray mastercodeJSON = random.getJSONArray("data");
 
-                    returncode = mastercodeJSON.toString();
+    //                 returncode = mastercodeJSON.toString();
 
-                    System.out.println("Extracted data:" + mastercodeJSON.toString());
+    //                 System.out.println("Extracted data:" + mastercodeJSON.toString());
 
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            } else {
-                System.err.println("Request failed with response code: " + responseCode);
-            }
+    //             } catch (Exception e) {
+    //                 e.printStackTrace();
+    //             }
+    //         } else {
+    //             System.err.println("Request failed with response code: " + responseCode);
+    //         }
             
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                if (reader != null)
-                    reader.close();
-                if (outputStream != null)
-                    outputStream.close();
-                if (connection != null)
-                    connection.disconnect();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        return returncode;
+    //     } catch (IOException e) {
+    //         e.printStackTrace();
+    //     } catch (Exception e) {
+    //         e.printStackTrace();
+    //     } finally {
+    //         try {
+    //             if (reader != null)
+    //                 reader.close();
+    //             if (outputStream != null)
+    //                 outputStream.close();
+    //             if (connection != null)
+    //                 connection.disconnect();
+    //         } catch (IOException e) {
+    //             e.printStackTrace();
+    //         }
+    //     }
+    //     return returncode;
 
-    }
+    // }
 
 }

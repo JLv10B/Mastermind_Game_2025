@@ -11,10 +11,13 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
+import static com.jl.mastermind.util.AppConstants.RoomParameters.*;
+
+
 @Data
 public class Room {
     @NotNull
-    @Size(max=100)
+    @Size(min=MIN_ROOM_NAME_SIZE, max=MAX_ROOM_NAME_SIZE)
     @JsonProperty("room_name")
     private String roomName;
 
@@ -22,8 +25,8 @@ public class Room {
     private Player host;
 
     @NotNull
-    @Min(value = 4, message = "Difficulty must be at least 4")
-    @Max(value = 6, message = "Difficulty can't be higher than 6")
+    @Min(value = MIN_DIFFICULTY, message = "Difficulty must be at least " + MIN_DIFFICULTY)
+    @Max(value = MAX_DIFFICULTY, message = "Difficulty can't be higher than " + MAX_DIFFICULTY)
     private int difficulty;
 
     @JsonProperty("max_guesses")

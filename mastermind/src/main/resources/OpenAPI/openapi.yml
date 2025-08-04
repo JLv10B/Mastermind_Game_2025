@@ -234,7 +234,7 @@ paths:
       tags:
         - Rooms
       requestBody:
-        description: Room object to be created.
+        description: RoomCreationDTO containing data for room creation
         required: true
         content:
           application/json:
@@ -404,7 +404,30 @@ components:
         - mastercode
         - participants
     
-    RoomUpdate:
+    RoomCreationDTO:
+      properties:
+        roomName:
+          type: string
+          description: The unique name for the room
+          example: "room1"
+        difficulty:
+          type: integer
+          description: How many digits are generated for the mastercode.
+          example: 4
+        maxGuesses:
+          type: integer
+          description: Maximum amount of guesses a player can make before the game ends
+          example: 12
+        closed:
+          type: boolean
+          description: A boolean that determines whether players can join the room. If closed is false, players cannot join the room. If closed is true players can join the room.
+      required:
+        - roomName
+        - difficulty
+        - maxGuesses
+        - closed
+
+    RoomUpdateDTO:
       properties:
         difficulty:
           type: integer

@@ -23,4 +23,9 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatusCode.valueOf(409)).body(e.getMessage());
     }
 
+    @ExceptionHandler({NoUserFoundException.class})
+    public ResponseEntity<Object> handleNoUserFoundException(NoUserFoundException e) {
+        return ResponseEntity.status(HttpStatusCode.valueOf(404)).body(e.getMessage());
+    }
+
 }

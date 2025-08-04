@@ -8,6 +8,9 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -15,17 +18,27 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.stereotype.Service;
 
+import com.jl.mastermind.dto.RoomCreationDTO;
 import com.jl.mastermind.dto.RoomUpdateDTO;
+import com.jl.mastermind.entities.Player;
+import com.jl.mastermind.entities.PlayerGuess;
 import com.jl.mastermind.entities.Room;
+import com.jl.mastermind.exceptions.NoUserFoundException;
 import com.jl.mastermind.exceptions.ResourceNotFoundException;
+import com.jl.mastermind.exceptions.RoomNameAlreadyExistsException;
 import com.jl.mastermind.repositories.RoomRepository;
+
+import jakarta.servlet.http.HttpSession;
 
 @Service
 public class RoomService {
+
+    private final PlayerService playerService;
     private final RoomRepository roomRepository;
 
-    public RoomService(RoomRepository roomRepository) {
+    public RoomService(RoomRepository roomRepository, PlayerService playerService) {
         this.roomRepository = roomRepository;
+        this.playerService = playerService;
     }
 
     public Map<String, Room> getRoomMap() {
@@ -80,6 +93,37 @@ public class RoomService {
         }
     }
 
+    public Room createRoom(RoomCreationDTO roomCreationDTO, HttpSession session) throws URISyntaxException {
+        if (session.getAttribute("username") == null) {
+            throw new NoUserFoundException("No username found, unable to create a room");
+        }
+        Optional<Room> roomOptional = roomRepository.findByRoomName(roomCreationDTO.getRoomName().toLowerCase());
+        if (roomOptional.isPresent()) {
+            throw new RoomNameAlreadyExistsException(roomCreationDTO.getRoomName() + " already exists");
+        } else {
+            String roomName = roomCreationDTO.getRoomName();
+            int difficulty = roomCreationDTO.getDifficulty();
+            int maxGuesses = roomCreationDTO.getMaxGuesses();
+            boolean closed = roomCreationDTO.isClosed();
+            Player host = playerService.getPlayerByName(session.getAttribute("username").toString().toLowerCase());
+            String masterCode = randomPatternGenerator(difficulty);
+            
+            List<PlayerGuess> guessList = new ArrayList<>();
+            Map<String, List<PlayerGuess>> participants = new HashMap<>();
+            participants.put(host.getUsername(), guessList);
+
+            Room newRoom = new Room(roomName, host, difficulty, maxGuesses, closed, false, masterCode, participants);
+            roomRepository.saveRoom(newRoom);
+
+            roomOptional = roomRepository.findByRoomName(newRoom.getRoomName().toLowerCase());
+            if (roomOptional.isPresent()) {
+                return newRoom;
+            } else {
+                throw new ResourceNotFoundException(masterCode);
+            }
+        } 
+    }
+
     
 public String randomPatternGenerator(int difficulty) throws URISyntaxException {
         HttpURLConnection connection = null;
@@ -127,8 +171,6 @@ public String randomPatternGenerator(int difficulty) throws URISyntaxException {
                     response.append(line);
                 }
 
-                System.out.println("Response Body:\n" + response.toString());
-
                 try {
                     JSONObject jsonObject = new JSONObject(response.toString());
                     JSONObject result = jsonObject.getJSONObject("result");
@@ -140,8 +182,6 @@ public String randomPatternGenerator(int difficulty) throws URISyntaxException {
                         sb.append(mastercodeJSON.getString(i));
                     }
                     mastercode = sb.toString();
-
-                    System.out.println("Extracted data:" + mastercodeJSON.toString());
 
                 } catch (Exception e) {
                     e.printStackTrace();

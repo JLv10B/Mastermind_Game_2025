@@ -51,6 +51,7 @@ public class PlayerService {
             if (session.getAttribute("username") == null) {
                 session.setAttribute("username", createdPlayer.getUsername());
             }
+
             return createdPlayer;
         }
     }

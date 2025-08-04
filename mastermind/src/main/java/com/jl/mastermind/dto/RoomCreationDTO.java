@@ -9,6 +9,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
+import static com.jl.mastermind.util.AppConstants.RoomParameters.*;
 @Data
 public class RoomCreationDTO {
     @NotNull
@@ -17,12 +18,13 @@ public class RoomCreationDTO {
     private String roomName;
 
     @NotNull
-    @Min(value = 4, message = "Difficulty must be at least 4")
-    @Max(value = 6, message = "Difficulty can't be higher than 6")
-    private int difficulty;
-
+    @Min(value = MIN_DIFFICULTY, message = "Difficulty must be at least " + MIN_DIFFICULTY)
+    @Max(value = MAX_DIFFICULTY, message = "Difficulty can't be higher than " + MAX_DIFFICULTY)
+    private Integer difficulty;
+    
     @JsonProperty("max_guesses")
-    private int maxGuesses;
+    @Min(value = MIN_GUESSES, message = "You must have a minimum of " + MIN_GUESSES + " guesses")
+    private Integer maxGuesses;
     private boolean closed;
     
     public RoomCreationDTO(String roomName, int difficulty, int maxGuesses, boolean closed,

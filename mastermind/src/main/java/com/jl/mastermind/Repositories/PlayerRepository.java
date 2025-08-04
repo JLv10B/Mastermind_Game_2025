@@ -27,8 +27,7 @@ public class PlayerRepository {
     }
 
     public Player createPlayer (Player newPlayer) {
-        playerMap.put(newPlayer.getUsername().toLowerCase(), newPlayer);
-        return newPlayer;
+        return playerMap.put(newPlayer.getUsername().toLowerCase(), newPlayer);
     }
 
     public boolean deletePlayer (String targetPlayer) {

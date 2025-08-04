@@ -15,7 +15,12 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler({UsernameAlreadyExistsException.class})
     public ResponseEntity<Object> handleUsernameAlreadyExistsException(UsernameAlreadyExistsException e) {
-        return ResponseEntity.status(HttpStatusCode.valueOf(400)).body(e.getMessage());
+        return ResponseEntity.status(HttpStatusCode.valueOf(409)).body(e.getMessage());
+    }
+
+    @ExceptionHandler({RoomNameAlreadyExistsException.class})
+    public ResponseEntity<Object> handleRoomNameAlreadyExistsException(RoomNameAlreadyExistsException e) {
+        return ResponseEntity.status(HttpStatusCode.valueOf(409)).body(e.getMessage());
     }
 
 }

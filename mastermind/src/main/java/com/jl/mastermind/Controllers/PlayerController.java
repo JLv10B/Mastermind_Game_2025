@@ -67,14 +67,17 @@ public class PlayerController {
 
     @PostMapping("/create-player")
     public ResponseEntity<Player> createPlayer(@Valid @RequestBody Player newPlayer) {
-        if (playerRepository.getPlayerByName(newPlayer.getUsername().toLowerCase())!= null){
-            Player createdPlayer = playerRepository.createPlayer(newPlayer);
-            if (createdPlayer == null) {
-                return ResponseEntity.internalServerError().build();
-            } 
-            return ResponseEntity.status(HttpStatus.CREATED).body(createdPlayer);
-        } else {
+        Optional<Player> playerOptional = playerRepository.getPlayerByName(newPlayer.getUsername().toLowerCase());
+        if (playerOptional.isPresent()){
             throw new UsernameAlreadyExistsException(newPlayer.getUsername() + " already exists");
+        } else {
+            playerRepository.createPlayer(newPlayer);
+            playerOptional = playerRepository.getPlayerByName(newPlayer.getUsername().toLowerCase());
+            if (playerOptional.isPresent()) {
+                return ResponseEntity.status(HttpStatus.CREATED).body(newPlayer);
+            } else {
+                return ResponseEntity.internalServerError().build();
+            }
         }
     }
 }

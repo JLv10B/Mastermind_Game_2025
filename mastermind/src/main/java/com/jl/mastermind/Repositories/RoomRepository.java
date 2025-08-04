@@ -67,6 +67,11 @@ public class RoomRepository {
         return room;
     }
 
+    public Room createRoom(Room newRoom) {
+       return roomMap.put(newRoom.getRoomName(), newRoom);
+
+    }
+
     public String randomPatternGenerator(int difficulty) throws URISyntaxException {
         HttpURLConnection connection = null;
         DataOutputStream outputStream = null;

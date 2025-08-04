@@ -34,7 +34,7 @@ public class RoomRepository {
     }
 
     public Room saveRoom(Room newRoom) {
-       return roomMap.put(newRoom.getRoomName(), newRoom);
+       return roomMap.put(newRoom.getRoomName().toLowerCase(), newRoom);
 
     }
 

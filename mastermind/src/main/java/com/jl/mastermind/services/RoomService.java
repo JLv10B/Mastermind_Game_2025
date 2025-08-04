@@ -119,7 +119,7 @@ public class RoomService {
             if (roomOptional.isPresent()) {
                 return newRoom;
             } else {
-                throw new ResourceNotFoundException(masterCode);
+                throw new ResourceNotFoundException(newRoom.getRoomName() + " not found");
             }
         } 
     }

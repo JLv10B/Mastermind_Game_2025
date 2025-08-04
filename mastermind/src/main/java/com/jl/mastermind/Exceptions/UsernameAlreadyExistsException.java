@@ -1,4 +1,4 @@
-package com.jl.mastermind.Exceptions;
+package com.jl.mastermind.exceptions;
 
 public class UsernameAlreadyExistsException extends RuntimeException{
     public UsernameAlreadyExistsException(String message) {

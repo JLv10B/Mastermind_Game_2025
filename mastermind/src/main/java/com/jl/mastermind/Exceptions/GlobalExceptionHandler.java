@@ -1,4 +1,4 @@
-package com.jl.mastermind.Exceptions;
+package com.jl.mastermind.exceptions;
 
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;

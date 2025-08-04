@@ -1,4 +1,4 @@
-package com.jl.mastermind.Repositories;
+package com.jl.mastermind.repositories;
 
 import java.util.Map;
 import java.util.Optional;
@@ -6,7 +6,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.stereotype.Repository;
 
-import com.jl.mastermind.Models.Player;
+import com.jl.mastermind.entities.Player;
+
 
 @Repository
 public class PlayerRepository {
@@ -27,7 +28,8 @@ public class PlayerRepository {
     }
 
     public Player createPlayer (Player newPlayer) {
-        return playerMap.put(newPlayer.getUsername().toLowerCase(), newPlayer);
+        playerMap.put(newPlayer.getUsername().toLowerCase(), newPlayer);
+        return newPlayer;
     }
 
     public boolean deletePlayer (String targetPlayer) {

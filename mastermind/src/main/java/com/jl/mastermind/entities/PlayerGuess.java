@@ -1,4 +1,4 @@
-package com.jl.mastermind.Models;
+package com.jl.mastermind.entities;
 
 import lombok.Data;
 

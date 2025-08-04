@@ -1,12 +1,7 @@
-package com.jl.mastermind.Controllers;
-
-import java.net.URISyntaxException;
+package com.jl.mastermind.controllers;
 
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
-
-import com.jl.mastermind.GameService;
 
 
 @Controller

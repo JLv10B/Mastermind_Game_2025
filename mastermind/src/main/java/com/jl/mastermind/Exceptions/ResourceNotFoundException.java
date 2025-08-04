@@ -1,4 +1,4 @@
-package com.jl.mastermind.Exceptions;
+package com.jl.mastermind.exceptions;
 
 public class ResourceNotFoundException extends RuntimeException{
     public ResourceNotFoundException(String message) {

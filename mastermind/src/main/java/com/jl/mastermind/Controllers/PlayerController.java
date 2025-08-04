@@ -1,7 +1,6 @@
-package com.jl.mastermind.Controllers;
+package com.jl.mastermind.controllers;
 
 import java.util.Map;
-import java.util.Optional;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,50 +12,38 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.jl.mastermind.Exceptions.ResourceNotFoundException;
-import com.jl.mastermind.Exceptions.UsernameAlreadyExistsException;
-import com.jl.mastermind.Models.Player;
-import com.jl.mastermind.Repositories.PlayerRepository;
+import com.jl.mastermind.services.PlayerService;
+import com.jl.mastermind.entities.Player;
 
+import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/players")
 public class PlayerController {
-    private final PlayerRepository playerRepository;
+    private final PlayerService playerService;
 
-    public PlayerController(PlayerRepository playerRepository) {
-        this.playerRepository = playerRepository;
+    public PlayerController(PlayerService playerService) {
+        this.playerService = playerService;
     }
 
 
     @GetMapping()
     public Map<String, Player> getAllPlayers() {
-        return playerRepository.getPlayerMap();
+        return playerService.getAllPlayers();
     }
 
 
     @GetMapping("/{username}")
     public ResponseEntity<Player> getPlayerByName(@PathVariable String username) {
-       Optional<Player> playerOptional = playerRepository.getPlayerByName(username.toLowerCase());
-       if (playerOptional.isPresent()) {
-        Player player = playerOptional.get();
+        Player player = playerService.getPlayerByName(username.toLowerCase());
         return ResponseEntity.ok(player);
-       } else {
-        throw new ResourceNotFoundException(username + " not found");
-       }
     }
 
 
     @DeleteMapping("/{username}")
-    public ResponseEntity<String> deletePlayer(@PathVariable String username) {
-        boolean deleted = false;
-        Optional<Player> playerOptional = playerRepository.getPlayerByName(username.toLowerCase());
-        if (playerOptional.isPresent()) {
-            deleted = playerRepository.deletePlayer(username.toLowerCase());
-        } else {
-            throw new ResourceNotFoundException(username + " not found");
-        }
+    public ResponseEntity<Void> deletePlayer(@PathVariable String username) {
+        Boolean deleted = playerService.deletePlayer(username.toLowerCase());
         if (deleted == true) {
             return ResponseEntity.noContent().build();
         } else {
@@ -66,18 +53,8 @@ public class PlayerController {
 
 
     @PostMapping("/create-player")
-    public ResponseEntity<Player> createPlayer(@Valid @RequestBody Player newPlayer) {
-        Optional<Player> playerOptional = playerRepository.getPlayerByName(newPlayer.getUsername().toLowerCase());
-        if (playerOptional.isPresent()){
-            throw new UsernameAlreadyExistsException(newPlayer.getUsername() + " already exists");
-        } else {
-            playerRepository.createPlayer(newPlayer);
-            playerOptional = playerRepository.getPlayerByName(newPlayer.getUsername().toLowerCase());
-            if (playerOptional.isPresent()) {
-                return ResponseEntity.status(HttpStatus.CREATED).body(newPlayer);
-            } else {
-                return ResponseEntity.internalServerError().build();
-            }
-        }
+    public ResponseEntity<Player> createPlayer(@Valid @RequestBody Player newPlayer, HttpSession session) {
+        Player createdPlayer = playerService.createPlayer(newPlayer, session);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdPlayer);
     }
 }

@@ -1,4 +1,4 @@
-package com.jl.mastermind.Repositories;
+package com.jl.mastermind.repositories;
 
 import org.springframework.stereotype.Repository;
 

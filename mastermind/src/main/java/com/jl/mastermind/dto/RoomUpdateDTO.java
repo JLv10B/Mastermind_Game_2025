@@ -1,17 +1,20 @@
-package com.jl.mastermind.Models;
+package com.jl.mastermind.dto;
 
-import jakarta.validation.constraints.Size;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import lombok.Data;
 
 @Data
-public class RoomUpdate {
+public class RoomUpdateDTO {
     private Integer difficulty;
+    
+    @JsonProperty("max_guesses")
     private Integer maxGuesses;
     private Boolean closed;
     private Boolean started;
     private Boolean mastercode;
     
-    public RoomUpdate(Integer difficulty, Integer maxGuesses, Boolean closed, Boolean started,
+    public RoomUpdateDTO(Integer difficulty, Integer maxGuesses, Boolean closed, Boolean started,
             Boolean mastercode) {
         this.difficulty = difficulty;
         this.maxGuesses = maxGuesses;

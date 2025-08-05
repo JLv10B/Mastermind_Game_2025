@@ -1,5 +1,10 @@
 package com.jl.mastermind.services;
 
+import static com.jl.mastermind.util.AppConstants.RoomParameters.MAX_DIFFICULTY;
+import static com.jl.mastermind.util.AppConstants.RoomParameters.MAX_GUESSES;
+import static com.jl.mastermind.util.AppConstants.RoomParameters.MIN_DIFFICULTY;
+import static com.jl.mastermind.util.AppConstants.RoomParameters.MIN_GUESSES;
+
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -13,23 +18,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
 
-import com.jl.mastermind.dto.RoomCreationDTO;
-import com.jl.mastermind.dto.RoomUpdateDTO;
-import com.jl.mastermind.entities.Player;
-import com.jl.mastermind.entities.PlayerGuess;
-import com.jl.mastermind.entities.Room;
-import com.jl.mastermind.exceptions.InsufficientPermissionsException;
-import com.jl.mastermind.exceptions.NoUserFoundException;
-import com.jl.mastermind.exceptions.ResourceNotFoundException;
-import com.jl.mastermind.exceptions.RoomNameAlreadyExistsException;
+import com.jl.mastermind.dto.*;
+import com.jl.mastermind.entities.*;
+import com.jl.mastermind.exceptions.*;
 import com.jl.mastermind.repositories.RoomRepository;
 
 import jakarta.servlet.http.HttpSession;
@@ -49,6 +46,7 @@ public class RoomService {
         return roomRepository.getRoomMap();
     }
 
+
     public Room getRoom(String roomName) {
         Optional<Room> roomOptional = roomRepository.findByRoomName(roomName.toLowerCase());
         if (roomOptional.isPresent()) {
@@ -59,12 +57,25 @@ public class RoomService {
         }
     }
 
+
+    public PlayerRoomViewDTO getRoomPublic(String roomName, HttpSession session) {
+        Optional<Room> roomOptional = roomRepository.findByRoomName(roomName.toLowerCase());
+        if (roomOptional.isPresent()) {
+            Room room = roomOptional.get();
+            List<PlayerGuess> guessList = room.getParticipants().get(session.getAttribute("username").toString().toLowerCase());
+            return new PlayerRoomViewDTO(roomName, room.getHost(), room.getDifficulty(), room.getMaxGuesses(), room.isClosed(), room.isStarted(), guessList);
+        } else {
+            throw new ResourceNotFoundException(roomName + " not found");
+        }
+    }
+
+
     public boolean deleteRoom(String roomName, HttpSession session) {
         Optional<Room> roomOptional = roomRepository.findByRoomName(roomName.toLowerCase());
         if (roomOptional.isPresent()) {
             String clientUsernameLower = session.getAttribute("username").toString().toLowerCase();
             String hostUsernameLower = roomOptional.get().getHost().getUsername().toLowerCase();
-            if (clientUsernameLower == hostUsernameLower) {
+            if (clientUsernameLower.equalsIgnoreCase(hostUsernameLower)) {
                 return roomRepository.deleteRoom(roomName.toLowerCase());
             } else {
                 throw new InsufficientPermissionsException("Insufficient permissions to perform this request");
@@ -74,34 +85,38 @@ public class RoomService {
         }
     }
 
-    public Room updateRoom(String roomName, RoomUpdateDTO roomUpdate) throws URISyntaxException {
-        Optional<Room> roomOptional = roomRepository.findByRoomName(roomName.toLowerCase());
-        if (!roomOptional.isPresent()) {
-            throw new ResourceNotFoundException(roomName + " not found");
-        } else {
-            Room updatedRoom = roomOptional.get();
-            if (roomUpdate.getDifficulty() != null) {
-                updatedRoom.setDifficulty(roomUpdate.getDifficulty());
-            }
-            if (roomUpdate.getMaxGuesses() != null) {
-                updatedRoom.setMaxGuesses(roomUpdate.getMaxGuesses());
-            }
-            if (roomUpdate.getClosed() != null) {
-                updatedRoom.setClosed(roomUpdate.getClosed());
-            }
-            if (roomUpdate.getStarted() != null) {
-                updatedRoom.setStarted(roomUpdate.getStarted());
-                if (updatedRoom.isClosed() == false) {
-                    updatedRoom.setClosed(true);
-                }
-            }
-            if (roomUpdate.getMastercode() == true) {
-                updatedRoom.setMastercode(randomPatternGenerator(updatedRoom.getDifficulty()));
-            }
-            roomRepository.saveRoom(updatedRoom);
-            return updatedRoom;
+
+    public Room updateRoom(String roomName, RoomUpdateDTO roomUpdateDTO) throws URISyntaxException {
+        Room updatedRoom = getRoom(roomName);
+        if (updatedRoom.isStarted() == true) {
+            throw new InsufficientPermissionsException("You can't modify the game, it has already started");
         }
+        if (roomUpdateDTO.getDifficulty() != null) {
+            if (roomUpdateDTO.getDifficulty() >= MIN_DIFFICULTY && roomUpdateDTO.getDifficulty() <= MAX_DIFFICULTY) {
+                updatedRoom.setDifficulty(roomUpdateDTO.getDifficulty());
+            } else {
+                throw new InvalidInputException(String.format("Difficulty out of bounds, must be %d-%d", MIN_DIFFICULTY, MAX_DIFFICULTY));
+            }
+        } 
+        if (roomUpdateDTO.getMaxGuesses() != null) {
+            if (roomUpdateDTO.getMaxGuesses() >= MIN_GUESSES && roomUpdateDTO.getMaxGuesses() <= MAX_GUESSES){
+                updatedRoom.setMaxGuesses(roomUpdateDTO.getMaxGuesses());
+            } else {
+                throw new InvalidInputException(String.format("Max guesses out of bounds, must be %d-%d", MIN_GUESSES, MAX_GUESSES));
+            }
+        }
+        if (roomUpdateDTO.getClosed() != null) {
+            updatedRoom.setClosed(roomUpdateDTO.getClosed());
+        }
+        if (roomUpdateDTO.getStarted() != null) {
+            updatedRoom.setStarted(roomUpdateDTO.getStarted());
+            if (updatedRoom.isClosed() == false) {
+                updatedRoom.setClosed(true);
+            }
+        }
+        return roomRepository.saveRoom(updatedRoom);
     }
+
 
     public Room createRoom(RoomCreationDTO roomCreationDTO, HttpSession session) throws URISyntaxException {
         if (session.getAttribute("username") == null) {
@@ -109,7 +124,7 @@ public class RoomService {
         }
         Optional<Room> roomOptional = roomRepository.findByRoomName(roomCreationDTO.getRoomName().toLowerCase());
         if (roomOptional.isPresent()) {
-            throw new RoomNameAlreadyExistsException(roomCreationDTO.getRoomName() + " already exists");
+            throw new NameAlreadyExistsException(roomCreationDTO.getRoomName() + " already exists");
         } else {
             String roomName = roomCreationDTO.getRoomName();
             int difficulty = roomCreationDTO.getDifficulty();
@@ -120,9 +135,9 @@ public class RoomService {
             
             List<PlayerGuess> guessList = new ArrayList<>();
             Map<String, List<PlayerGuess>> participants = new HashMap<>();
-            participants.put(host.getUsername(), guessList);
+            participants.put(host.getUsername().toLowerCase(), guessList);
 
-            Room newRoom = new Room(roomName, host, difficulty, maxGuesses, closed, false, masterCode, participants);
+            Room newRoom = new Room(roomName, host, difficulty, maxGuesses, closed, false, false, masterCode, participants);
             roomRepository.saveRoom(newRoom);
 
             roomOptional = roomRepository.findByRoomName(newRoom.getRoomName().toLowerCase());
@@ -134,32 +149,133 @@ public class RoomService {
         } 
     }
 
-    public Room addParticipant(String roomName, String playerUsername) {
-        Optional<Room> roomOptional = roomRepository.findByRoomName(roomName.toLowerCase());
-        if (!roomOptional.isPresent()) {
-            throw new ResourceNotFoundException(roomName + " not found");
-        } else {
-            Room room = roomOptional.get();
-            Map<String, List<PlayerGuess>> participants = room.getParticipants();
-            List<PlayerGuess> guessList = new ArrayList<>();
-            participants.put(playerUsername, guessList);
-            return room;
-        } 
+
+    public Room addParticipant(String roomName, Player player) {
+        Room room = getRoom(roomName);
+        if (room.isClosed()) {
+            throw new InsufficientPermissionsException("Room is closed");
+        }
+        Map<String, List<PlayerGuess>> participants = room.getParticipants();
+        List<PlayerGuess> guessList = new ArrayList<>();
+        participants.put(player.getUsername().toLowerCase(), guessList);
+        return room;
     }
 
-    public Room removeParticipant(String roomName, String playerUsername) {
-        Optional<Room> roomOptional = roomRepository.findByRoomName(roomName.toLowerCase());
-        if (!roomOptional.isPresent()) {
-            throw new ResourceNotFoundException(roomName + " not found");
-        } else {
-            Room room = roomOptional.get();
-            Map<String, List<PlayerGuess>> participants = room.getParticipants();
-            participants.remove(playerUsername);
-            return room;
-        } 
+
+    public Room removeParticipant(String roomName, Player player) {
+        Room room = getRoom(roomName);
+        Map<String, List<PlayerGuess>> participants = room.getParticipants();
+        participants.remove(player.getUsername().toLowerCase());
+        return room;
     }
 
+
+    public PlayerRoomViewDTO resetRoom(String roomName, RoomUpdateDTO roomUpdate, HttpSession session) throws URISyntaxException {
+        Room updatedRoom = getRoom(roomName);
+        if (!session.getAttribute("username").toString().equalsIgnoreCase(updatedRoom.getHost().getUsername())) {
+            throw new InsufficientPermissionsException("Only the host can reset the room");
+        }
+        if (roomUpdate.getMastercode() != null && roomUpdate.getMastercode() == true) {
+            updatedRoom.setMastercode(randomPatternGenerator(updatedRoom.getDifficulty()));
+            updatedRoom.setClosed(true);
+            updatedRoom.setStarted(false);
+            updatedRoom.setCompleted(false);
+            Map<String, List<PlayerGuess>> participants = updatedRoom.getParticipants();
+            for (List<PlayerGuess> guessList : participants.values()) {
+                guessList.clear();
+            }
+            roomRepository.saveRoom(updatedRoom);
+            List<PlayerGuess> guessList = participants.get(session.getAttribute("username").toString().toLowerCase());
+            return new PlayerRoomViewDTO(roomName, updatedRoom.getHost(), updatedRoom.getDifficulty(), updatedRoom.getMaxGuesses(), updatedRoom.isClosed(), updatedRoom.isStarted(), guessList);
+        } else {
+            throw new InvalidInputException("Unable to process input");
+        }
+        
+    }
+
+
+    public PlayerGuess submitGuess(String roomName, PlayerGuessDTO playerGuessDTO, HttpSession session) {
+        String playerGuesString = playerGuessDTO.getPlayerGuess();
+        Room room = getRoom(roomName);
+        if (!room.isStarted()) {
+            throw new GameNotStartedException("Game has not started yet");
+        }
+        if (room.isCompleted()) {
+            return new PlayerGuess(playerGuesString, 0, "Game completed, reset the game to play again");
+        }
+        if (playerGuessDTO == null || playerGuesString.length() != room.getDifficulty()) {
+            throw new InvalidInputException("Please submit the correct number of digits");
+        }
+        if (!playerGuesString.matches("\\d+")) {
+            throw new InvalidInputException("Please submit only numbers");
+        }
+        Map<String, List<PlayerGuess>> participants = room.getParticipants();
+        List<PlayerGuess> playerGuessList = participants.get(session.getAttribute("username").toString().toLowerCase());
+        int currentGuessCount = room.getMaxGuesses() - playerGuessList.size();
+        if(currentGuessCount <= 0) {
+            return new PlayerGuess(playerGuesString, 0, "No guesses remaining, reset the game to play again");
+        }
+        int remainingGuesses = currentGuessCount--;
+        PlayerGuess playerGuess = createGuess(playerGuesString, room.getMastercode(), remainingGuesses);
+        playerGuessList.add(playerGuess);
+
+        if (playerGuess.getExactMatches() == 4) {
+            room.setCompleted(true);
+        }
+
+        return playerGuess;
+    }
+
+
+private PlayerGuess createGuess(String playerGuessString, String masterCode, int remainingGuesses) { 
+    String feedback;
+    int matchingNumbers = 0;
+    int exactMatch= 0;
+
+    List<Character> tempPlayerGuessList = playerGuessString.chars().mapToObj(c -> (char) c).collect(Collectors.toList());
+    List<Character> tempMasterCodeList = masterCode.chars().mapToObj(c -> (char) c).collect(Collectors.toList());
+
+    for (int i=0; i<playerGuessString.length(); i++) {
+        if (tempPlayerGuessList.get(i).equals(tempMasterCodeList.get(i))) {
+            exactMatch++;
+        }
+    }
+
+    Map<Character, Integer> frequencyMap = new HashMap<>();
+    for (char c : tempMasterCodeList) {
+        frequencyMap.put(c, frequencyMap.getOrDefault(c, 0) + 1);
+    }
+    for (char c : tempPlayerGuessList) {
+        if (frequencyMap.containsKey(c) && frequencyMap.get(c) > 0) {
+            matchingNumbers++;
+            frequencyMap.put(c, frequencyMap.get(c) - 1);
+        }
+    }
+
+    String locationString = "location";
+    if (exactMatch > 1) {
+        locationString = "locations";
+    }
+
+    String guessesString = "guesses";
+    if (remainingGuesses == 1) {
+        guessesString = "guess";
+    }
+
+    String gamestateString;
+    if (exactMatch == masterCode.length()) {
+        gamestateString = "Congratulations, you win!";
+    } else if (remainingGuesses <= 0) {
+        gamestateString = "Sorry no more guesses left, you lose. Want to play again?";
+    } else {
+        gamestateString = "Oops, not quite. Try again!";
+    }
+
+    feedback = String.format("You guessed %s. You got %d correct with %d in the correct %s. You have %d %s remaining. %s", playerGuessString, matchingNumbers, exactMatch, locationString, remainingGuesses, guessesString, gamestateString);
+    return new PlayerGuess(playerGuessString, exactMatch, feedback);
+}
     
+
 public String randomPatternGenerator(int difficulty) throws URISyntaxException {
         HttpURLConnection connection = null;
         DataOutputStream outputStream = null;

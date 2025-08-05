@@ -124,7 +124,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorDetails'
-  /rooms:
+  /rooms/secret-all-rooms:
     get:
       description: Returns all rooms
       tags:
@@ -148,9 +148,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorDetails'
-  /rooms/{roomName}:
+  /rooms/{roomName}/secret:
     get:
-      description: Returns room with specified room name
+      description: Returns room with specified room name with all data
       tags:
         - Rooms
       responses:
@@ -160,6 +160,85 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Room'
+        '404':
+          description: Room with speficied room name not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetails'
+    delete:
+      operationId: deleteRoom
+      description: Deletes a room with the specified room
+      tags:
+        - Rooms
+      parameters:
+        - name: roomName
+          in: path
+          description: The unique name of the room to delete.
+          required: true
+          schema:
+            type: string
+          example: "room1"
+      responses:
+        '204':
+          description: Room deleted successfully
+        '404':
+          description: Room not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetails'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetails'
+    patch:
+      operationId: updateRoom
+      description: Partially updates a room
+      tags:
+        - Rooms
+      parameters:
+        - name: roomName
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "room1"
+      requestBody:
+        description: RoomUpdate object
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoomUpdateDTO'
+      responses:
+        '200':
+          description: Room updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetails'
+        '404':
+          description: Room not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetails'
+
+  /rooms/{roomName}:
+    get:
+      description: Returns room with specified room name with limited data
+      tags:
+        - Rooms
+      responses:
+        '200':
+          description: Room found successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerRoomViewDTO'
         '404':
           description: Room with speficied room name not found
           content:
@@ -212,7 +291,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RoomUpdate'
+              $ref: '#/components/schemas/RoomUpdateDTO'
       responses:
         '200':
           description: Room updated successfully
@@ -239,7 +318,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Room'
+              $ref: '#/components/schemas/RoomUpdateDTO'
       responses:
         '201':
           description: Room created successfully
@@ -263,12 +342,12 @@ paths:
     post:
       description: Adds the specified player to the participants of an existing room
       tags:
-        - Room
+        - Rooms
       parameters: 
         - name: roomName
           in: path
           description: The unique name of the room to join.
-          required: true
+          required: trueS
           schema:
             type: string
           example: "room1"
@@ -307,7 +386,7 @@ paths:
     delete:
       description: Removes the specified player from the participants of an existing room
       tags:
-        - Room
+        - Rooms
       parameters: 
         - name: roomName
           in: path
@@ -342,6 +421,58 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorDetails'
+  /rooms/{roomName}/submit-guess:
+    post:
+      description: Submits a client's guess to the room
+      tags:
+        - Rooms
+        - Player Guess
+      requestBody:
+        description: PlayerGuess object
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlayerGuess'
+      responses:
+        '201':
+          description: Guess created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerGuess'
+        '400':
+          description: Invalid guess data provided
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetails'
+        '404':
+          description: Unable to find room
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetails'
+  /rooms/{roomName}/reset:
+    post:
+      description: Resets the room, generating new masterocde and deleting all player guesses
+      parameters:
+        - name: roomName
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "room1"
+      requestBody:
+        description: RoomUpdate object
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoomUpdateDTO'
+      responses:
+        '200':
+          description: OK
 
 
 components:
@@ -382,9 +513,9 @@ components:
           type: boolean
           description: A boolean that determines whether players can submit guesses. If started is false, players cannot submit guesses. If started is true players can submit guesses and closed will also be set to true as once the room starts no players are allowed to join the room.
         mastercode:
-          type: array
-          description: A list of strings that the players are trying to guesses.
-          example: ['1', '2', '3', '4']
+          type: string
+          description: A string with length the same as the room's difficulty
+          example: "1234"
         participants:
           type: object
           description: A map of players in the room, keyed by their username.
@@ -395,6 +526,9 @@ components:
               username: "John123"
             jane123:
               username: "jane123"
+        completed:
+          type: boolean
+          description: Tracks if the game has been completed or not
       required:
         - roomName
         - host
@@ -449,22 +583,26 @@ components:
 
     PlayerGuess:
       properties:
-        guessNumber:
-          type: integer
-          description: The unique identifier for the player's guess, also tracks how many guesses the player has submitted for that game.
-          example: 3
-        player:
-          type: object
-          description: The player who submitted the guesses.
-          additionalProperties:
-            $ref: '#/components/schemas/Player'
-          example:
-            john123:
-              username: "John123"
         guess:
-          type: array
-          description: A list of strings that the players are trying to match to the room's mastercode.
-          example: ['1', '2', '3', '4']
+          type: string
+          description: A string with the same number of digits as the difficulty of the room
+          example: "1234"
+        exactMatches:
+          type: integer
+          description: How many digits of the guess match with the mastercode
+          example: 2
+      required:
+        - guess
+        - exactMatches
+
+    PlayerGuessDTO:
+      properties:
+        guess:
+          type: string
+          description: A string with the same number of digits as the difficulty of the room
+          example: "1234"
+      required:
+        - guess
         
     ErrorDetails:
       type: object
@@ -473,6 +611,49 @@ components:
           type: string
           description: A human-readable error message.
           example: 'username not found'
+
+    PlayerRoomViewDTO:
+      type: object
+      properties:
+        roomName:
+          type: string
+          description: The room's unique name.
+          example: "John123's room"
+        host:
+          type: object
+          description: The room's creator represented by their Player object.
+          example: Player "John123"
+        difficulty:
+          type: integer
+          description: How many digits are generated for the mastercode.
+          example: 4
+        maxGuesses:
+          type: integer
+          description: Maximum amount of guesses a player can make before the game ends
+          example: 12
+        closed:
+          type: boolean
+          description: A boolean that determines whether players can join the room. If closed is false, players cannot join the room. If closed is true players can join the room.
+        started:
+          type: boolean
+          description: A boolean that determines whether players can submit guesses. If started is false, players cannot submit guesses. If started is true players can submit guesses and closed will also be set to true as once the room starts no players are allowed to join the room.
+        guessList:
+          type: object
+          description: A list of the player's guesses
+          additionalProperties: 
+            $ref: '#/components/schemas/PlayerGuess'
+          example:
+            john123:
+              username: "John123"
+            jane123:
+              username: "jane123"
+      required:
+        - roomName
+        - host
+        - difficulty
+        - closed
+        - started
+        - guessList
 
 
 

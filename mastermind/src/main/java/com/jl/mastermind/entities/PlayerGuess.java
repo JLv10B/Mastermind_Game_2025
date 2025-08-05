@@ -1,18 +1,18 @@
 package com.jl.mastermind.entities;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 @Data
 public class PlayerGuess {
-    private int guessNumber;
-    private Player player;
-    private String guess;
-    
-    public PlayerGuess(Player player, String guess) {
-        this.player = player;
-        this.guess = guess;
+    @NotNull
+    private String playerGuess;
+    private int exactMatches;
+    private String feedback;
 
+    public PlayerGuess(String playerGuess, int exactMatches, String feedback) {
+        this.playerGuess = playerGuess;
+        this.exactMatches = exactMatches;
+        this.feedback = feedback;
     }
-
-
 }

@@ -5,8 +5,9 @@ import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
+import com.jl.mastermind.exceptions.InsufficientPermissionsException;
+import com.jl.mastermind.exceptions.NameAlreadyExistsException;
 import com.jl.mastermind.exceptions.ResourceNotFoundException;
-import com.jl.mastermind.exceptions.UsernameAlreadyExistsException;
 import com.jl.mastermind.repositories.PlayerRepository;
 import com.jl.mastermind.entities.Player;
 
@@ -24,6 +25,7 @@ public class PlayerService {
         return playerRepository.getPlayerMap();
     }
     
+    
     public Player getPlayerByName(String username) {
         Optional<Player> playerOptional = playerRepository.getPlayerByName(username.toLowerCase());
         if (playerOptional.isPresent()) {
@@ -32,6 +34,7 @@ public class PlayerService {
             throw new ResourceNotFoundException(username + " not found");
        }
     }
+
 
     public boolean deletePlayer(String username) {
         Optional<Player> playerOptional = playerRepository.getPlayerByName(username.toLowerCase());
@@ -42,16 +45,17 @@ public class PlayerService {
         }
     }
 
+
     public Player createPlayer(Player newPlayer, HttpSession session) {
+        if (session.getAttribute("username") != null) {
+            throw new InsufficientPermissionsException("You are alreayd logged in.");
+        }
         Optional<Player> playerOptional = playerRepository.getPlayerByName(newPlayer.getUsername().toLowerCase());
         if (playerOptional.isPresent()){
-            throw new UsernameAlreadyExistsException(newPlayer.getUsername() + " already exists");
+            throw new NameAlreadyExistsException(newPlayer.getUsername() + " already exists");
         } else {
             Player createdPlayer = playerRepository.createPlayer(newPlayer);
-            if (session.getAttribute("username") == null) {
-                session.setAttribute("username", createdPlayer.getUsername());
-            }
-
+            session.setAttribute("username", createdPlayer.getUsername());
             return createdPlayer;
         }
     }

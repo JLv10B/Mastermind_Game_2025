@@ -13,13 +13,8 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatusCode.valueOf(404)).body(e.getMessage());
     }
 
-    @ExceptionHandler({UsernameAlreadyExistsException.class})
-    public ResponseEntity<Object> handleUsernameAlreadyExistsException(UsernameAlreadyExistsException e) {
-        return ResponseEntity.status(HttpStatusCode.valueOf(409)).body(e.getMessage());
-    }
-
-    @ExceptionHandler({RoomNameAlreadyExistsException.class})
-    public ResponseEntity<Object> handleRoomNameAlreadyExistsException(RoomNameAlreadyExistsException e) {
+    @ExceptionHandler({NameAlreadyExistsException.class})
+    public ResponseEntity<Object> handleRoomNameAlreadyExistsException(NameAlreadyExistsException e) {
         return ResponseEntity.status(HttpStatusCode.valueOf(409)).body(e.getMessage());
     }
 
@@ -29,8 +24,18 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler({InsufficientPermissionsException.class})
-    public ResponseEntity<Object> handleNInsufficientPermissionsException(InsufficientPermissionsException e) {
+    public ResponseEntity<Object> handleInsufficientPermissionsException(InsufficientPermissionsException e) {
         return ResponseEntity.status(HttpStatusCode.valueOf(403)).body(e.getMessage());
+    }
+
+    @ExceptionHandler({InvalidInputException.class})
+    public ResponseEntity<Object> handleInvalidInputException(InvalidInputException e) {
+        return ResponseEntity.status(HttpStatusCode.valueOf(400)).body(e.getMessage());
+    }
+
+    @ExceptionHandler({GameNotStartedException.class})
+    public ResponseEntity<Object> handleGameNotStartedException(GameNotStartedException e) {
+        return ResponseEntity.status(HttpStatusCode.valueOf(400)).body(e.getMessage());
     }
 
 }

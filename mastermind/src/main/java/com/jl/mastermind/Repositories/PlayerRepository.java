@@ -14,9 +14,6 @@ public class PlayerRepository {
     private Map<String, Player> playerMap = new ConcurrentHashMap<>();
 
     public PlayerRepository() {
-        playerMap.put("adam", new Player("Adam"));
-        playerMap.put("steve", new Player("Steve"));
-        playerMap.put("tom", new Player("Tom"));
     }
 
     public Optional<Player> getPlayerByName(String username) {      

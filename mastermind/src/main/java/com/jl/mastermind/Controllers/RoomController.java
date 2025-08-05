@@ -14,8 +14,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.jl.mastermind.dto.PlayerGuessDTO;
+import com.jl.mastermind.dto.PlayerRoomViewDTO;
 import com.jl.mastermind.dto.RoomCreationDTO;
 import com.jl.mastermind.dto.RoomUpdateDTO;
+import com.jl.mastermind.entities.Player;
+import com.jl.mastermind.entities.PlayerGuess;
 import com.jl.mastermind.entities.Room;
 import com.jl.mastermind.services.RoomService;
 
@@ -32,16 +36,26 @@ public class RoomController {
         this.roomService = roomService;
     }
 
-    @GetMapping()
+
+    @GetMapping("/secret-all-rooms")
     public Map<String, Room> getRoomMap() {
         return roomService.getRoomMap();
     }
 
-    @GetMapping("/{roomName}")
+
+    @GetMapping("/{roomName}/secret")
     public ResponseEntity<Room> getRoom(@PathVariable String roomName) {
         Room room = roomService.getRoom(roomName.toLowerCase());
         return ResponseEntity.ok(room);
     }
+
+
+    @GetMapping("/{roomName}")
+    public ResponseEntity<PlayerRoomViewDTO> getRoom(@PathVariable String roomName, HttpSession session) {
+        PlayerRoomViewDTO room = roomService.getRoomPublic(roomName.toLowerCase(), session);
+        return ResponseEntity.ok(room);
+    }
+
 
     @DeleteMapping("/{roomName}")
     public ResponseEntity<String> deleteRoom(@PathVariable String roomName, HttpSession session) {
@@ -52,28 +66,45 @@ public class RoomController {
         }
     }
 
+
     @PatchMapping("/{roomName}")
     public ResponseEntity<Room> updateRoom(@PathVariable String roomName, @RequestBody RoomUpdateDTO roomUpdate) throws URISyntaxException {
         Room updatedRoom = roomService.updateRoom(roomName, roomUpdate);
         return ResponseEntity.ok(updatedRoom);
     }
 
+
     @PostMapping("/create-room")
     public ResponseEntity<Room> createRoom(@Valid @RequestBody RoomCreationDTO roomCreationDTO, HttpSession session) throws URISyntaxException {
         Room newRoom = roomService.createRoom(roomCreationDTO, session);
         return ResponseEntity.status(HttpStatus.CREATED).body(newRoom);
-
     }
+
 
     @PostMapping("/{roomName}/participants")
-    public ResponseEntity<Room> addParticipant(@PathVariable String roomName, @RequestBody String playerUsername) {
-        Room updatedRoom = roomService.addParticipant(roomName, playerUsername);
+    public ResponseEntity<Room> addParticipant(@PathVariable String roomName, @RequestBody Player player) {
+        Room updatedRoom = roomService.addParticipant(roomName, player);
         return ResponseEntity.status(HttpStatus.CREATED).body(updatedRoom);
     }
 
+
     @DeleteMapping("/{roomName}/participants")
-    public ResponseEntity<Room> removeParticipant(@PathVariable String roomName, @RequestBody String playerUsername) {
-        Room updatedRoom = roomService.removeParticipant(roomName, playerUsername);
+    public ResponseEntity<Room> removeParticipant(@PathVariable String roomName, @RequestBody Player player) {
+        Room updatedRoom = roomService.removeParticipant(roomName, player);
         return ResponseEntity.status(HttpStatus.CREATED).body(updatedRoom);
+    }
+
+
+    @PostMapping("/{roomName}/reset-room")
+    public ResponseEntity<PlayerRoomViewDTO> resetRoom(@PathVariable String roomName, @RequestBody RoomUpdateDTO roomUpdateDTO, HttpSession session) throws URISyntaxException {
+        PlayerRoomViewDTO updatedRoom = roomService.resetRoom(roomName, roomUpdateDTO, session);
+        return ResponseEntity.ok(updatedRoom);
+    }
+
+    
+    @PostMapping("/{roomName}/submit-guess")
+    public ResponseEntity<PlayerGuess> submitGuess(@PathVariable String roomName, @RequestBody PlayerGuessDTO playerGuess, HttpSession session) {
+        PlayerGuess feedback = roomService.submitGuess(roomName, playerGuess, session);
+        return ResponseEntity.ok(feedback);
     }
 }

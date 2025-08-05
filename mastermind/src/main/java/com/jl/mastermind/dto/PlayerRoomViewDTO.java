@@ -1,9 +1,10 @@
-package com.jl.mastermind.entities;
-
-import java.util.List;
-import java.util.Map;
+package com.jl.mastermind.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.jl.mastermind.entities.Player;
+import com.jl.mastermind.entities.PlayerGuess;
+
+import java.util.List;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -13,9 +14,8 @@ import lombok.Data;
 
 import static com.jl.mastermind.util.AppConstants.RoomParameters.*;
 
-
 @Data
-public class Room {
+public class PlayerRoomViewDTO {
     @NotNull
     @Size(min=MIN_ROOM_NAME_SIZE, max=MAX_ROOM_NAME_SIZE)
     @JsonProperty("room_name")
@@ -33,22 +33,16 @@ public class Room {
     private int maxGuesses;
     private boolean closed;
     private boolean started;
-    private boolean completed;
-
-    private String mastercode;
-    private Map<String, List<PlayerGuess>> participants;
+    private List<PlayerGuess> guessList;
     
-    public Room(String roomName, Player host, int difficulty, int maxGuesses, boolean closed, boolean started, boolean completed,
-            String mastercode, Map<String, List<PlayerGuess>> participants) {
+    public PlayerRoomViewDTO(String roomName, Player host, int difficulty, int maxGuesses, boolean closed, boolean started, List<PlayerGuess> guessList) {
         this.roomName = roomName;
         this.host = host;
         this.difficulty = difficulty;
         this.maxGuesses = maxGuesses;
         this.closed = closed;
         this.started = started;
-        this.completed = completed;
-        this.mastercode = mastercode;
-        this.participants = participants;
+        this.guessList = guessList;
     }
     
 }

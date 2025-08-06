@@ -7,12 +7,14 @@ import lombok.Data;
 public class PlayerGuess {
     @NotNull
     private String playerGuess;
-    private int exactMatches;
+    private boolean correctGuess;
     private String feedback;
+    private Integer remainingGuesses;
 
-    public PlayerGuess(String playerGuess, int exactMatches, String feedback) {
+    public PlayerGuess(String playerGuess, boolean correctGuess, String feedback, int remainingGuesses) {
         this.playerGuess = playerGuess;
-        this.exactMatches = exactMatches;
+        this.correctGuess = correctGuess;
         this.feedback = feedback;
+        this.remainingGuesses = remainingGuesses;
     }
 }

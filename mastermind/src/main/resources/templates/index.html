@@ -190,6 +190,18 @@
             padding: 15px 30px;
         }
 
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .controls button {
+            width: auto;
+            padding: 10px 20px;
+            font-size: 14px;
+        }
+
         @media (max-width: 768px) {
             .game-layout {
                 grid-template-columns: 1fr;
@@ -211,6 +223,11 @@
             color: #38a169;
             font-size: 14px;
             margin-top: 5px;
+        }
+
+        .disabled {
+            opacity: 0.6;
+            pointer-events: none;
         }
     </style>
 </head>
@@ -255,12 +272,12 @@
                 <label>Game Mode:</label>
                 <div class="radio-group">
                     <div class="radio-option">
-                        <input type="radio" id="singleplayer" name="game-mode" value="false" checked>
-                        <label for="singleplayer">Singleplayer</label>
+                        <input type="radio" id="singleplayer" name="game-mode" value="true" checked>
+                        <label for="singleplayer">Singleplayer (Closed Room)</label>
                     </div>
                     <div class="radio-option">
-                        <input type="radio" id="multiplayer" name="game-mode" value="true">
-                        <label for="multiplayer">Multiplayer</label>
+                        <input type="radio" id="multiplayer" name="game-mode" value="false">
+                        <label for="multiplayer">Multiplayer (Open Room)</label>
                     </div>
                 </div>
             </div>
@@ -278,7 +295,7 @@
                         <label for="guess-input">Enter your guess:</label>
                         <div class="guess-input">
                             <input type="text" id="guess-input" placeholder="Enter your guess">
-                            <button onclick="submitGuess()">Submit</button>
+                            <button onclick="submitGuess()">Submit Guess</button>
                         </div>
                         <div id="guess-error" class="error"></div>
                     </div>
@@ -286,8 +303,13 @@
                     <div class="form-group">
                         <label>Feedback:</label>
                         <div id="feedback-box" class="feedback-box">
-                            <div class="feedback-entry">Welcome to the game! Enter your first guess above.</div>
+                            <div class="feedback-entry">Welcome to the game! Click "Start Game" to begin, then enter your first guess above.</div>
                         </div>
+                    </div>
+
+                    <div class="controls">
+                        <button id="start-game-btn" onclick="startGame()">Start Game</button>
+                        <button id="reset-game-btn" onclick="resetGame()" class="disabled">Reset Game</button>
                     </div>
                 </div>
                 
@@ -298,7 +320,10 @@
                         <strong>Player:</strong> <span id="player-name">Player</span>
                     </div>
                     <div style="margin-top: 15px;">
-                        <strong>Difficulty:</strong> <span id="game-difficulty">1</span>
+                        <strong>Difficulty:</strong> <span id="game-difficulty">4</span> digits
+                    </div>
+                    <div style="margin-top: 15px;">
+                        <strong>Status:</strong> <span id="game-status">Not Started</span>
                     </div>
                 </div>
             </div>
@@ -310,13 +335,15 @@
         let gameState = {
             username: '',
             roomName: '',
-            difficulty: 1,
+            difficulty: 4,
             maxGuesses: 10,
-            multiplayer: false,
-            remainingGuesses: 10
+            closed: true,
+            remainingGuesses: 10,
+            gameStarted: false,
+            gameCompleted: false
         };
 
-        // Base URL for your Spring Boot API - Update this to match your backend
+        // Base URL for your Spring Boot API
         const API_BASE_URL = 'http://localhost:8080';
 
         // Utility functions
@@ -345,12 +372,12 @@
             const username = document.getElementById('username').value.trim();
             
             try {
-                // First create the player via API
                 const response = await fetch(`${API_BASE_URL}/players/create-player`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
+                    credentials: 'include',
                     body: JSON.stringify({
                         username: username
                     })
@@ -358,15 +385,14 @@
                 
                 if (response.ok) {
                     const player = await response.json();
-                    gameState.username = username;
+                    gameState.username = player.username;
                     showPage('room-creation-page');
                 } else {
-                    // Handle player creation errors
                     let errorMessage = 'Failed to create player';
                     try {
-                        const errorData = await response.json();
-                        if (errorData.message) {
-                            errorMessage = errorData.message;
+                        const errorText = await response.text();
+                        if (errorText) {
+                            errorMessage = errorText;
                         }
                     } catch (parseError) {
                         errorMessage = `Error ${response.status}: ${response.statusText}`;
@@ -386,55 +412,41 @@
             const roomName = document.getElementById('room-name').value.trim();
             const difficulty = parseInt(document.getElementById('difficulty').value);
             const maxGuesses = parseInt(document.getElementById('max-guesses').value);
-            const multiplayer = document.querySelector('input[name="game-mode"]:checked').value === 'true';
+            const closed = document.querySelector('input[name="game-mode"]:checked').value === 'true';
             
-            // Update game state
-            gameState.roomName = roomName;
-            gameState.difficulty = difficulty;
-            gameState.maxGuesses = maxGuesses;
-            gameState.multiplayer = multiplayer;
-            gameState.remainingGuesses = maxGuesses;
             
             try {
-                // Call your backend API to create the room
-                // Your backend uses HttpSession for username, so we need to set it first
-                await setUsernameInSession();
-                
                 const response = await fetch(`${API_BASE_URL}/rooms/create-room`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    credentials: 'include', // Important for HttpSession
+                    credentials: 'include',
                     body: JSON.stringify({
-                        room_name: roomName,        // Matches @JsonProperty("room_name")
+                        room_name: roomName,
                         difficulty: difficulty,
-                        max_guesses: maxGuesses,    // Matches @JsonProperty("max_guesses")
-                        closed: !multiplayer        // closed=false means open for joining
+                        max_guesses: maxGuesses,
+                        closed: closed
                     })
                 });
                 
                 if (response.ok) {
                     const roomData = await response.json();
-                    // Room created successfully and creator is automatically a participant
+                    // Update game state
+                    gameState.roomName = roomData.room_name;
+                    gameState.difficulty = roomData.difficulty;
+                    gameState.maxGuesses = roomData.max_guesses;
+                    gameState.closed = roomData.closed;
+                    gameState.remainingGuesses = roomData.max_guesses;
                     initializeGameRoom();
                 } else {
-                    // Handle different error response formats from Spring Boot
                     let errorMessage = 'Failed to create room';
                     try {
-                        const errorData = await response.json();
-                        // Handle different Spring Boot error response formats
-                        if (errorData.message) {
-                            errorMessage = errorData.message;
-                        } else if (errorData.error) {
-                            errorMessage = errorData.error;
-                        } else if (errorData.details) {
-                            errorMessage = errorData.details;
-                        } else if (typeof errorData === 'string') {
-                            errorMessage = errorData;
+                        const errorText = await response.text();
+                        if (errorText) {
+                            errorMessage = errorText;
                         }
                     } catch (parseError) {
-                        // If response isn't JSON, use status text
                         errorMessage = `Error ${response.status}: ${response.statusText}`;
                     }
                     showError('room-creation-error', errorMessage);
@@ -445,24 +457,6 @@
             }
         }
 
-        // Set username in session (you might need a separate endpoint for this)
-        async function setUsernameInSession() {
-            try {
-                await fetch(`${API_BASE_URL}/session/username`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    credentials: 'include',
-                    body: JSON.stringify({
-                        username: gameState.username
-                    })
-                });
-            } catch (error) {
-                console.log('Session setup failed, continuing anyway:', error);
-            }
-        }
-
         // Game room functions
         function initializeGameRoom() {
             // Update UI with game state
@@ -470,76 +464,144 @@
             document.getElementById('player-name').textContent = gameState.username;
             document.getElementById('game-difficulty').textContent = gameState.difficulty;
             document.getElementById('guess-counter').textContent = gameState.remainingGuesses;
+            document.getElementById('guess-input').setAttribute('placeholder', `Enter ${gameState.difficulty} digits`);
+            document.getElementById('game-status').textContent = 'Ready to Start';
             
             // Clear feedback
             const feedbackBox = document.getElementById('feedback-box');
-            feedbackBox.innerHTML = '<div class="feedback-entry">Welcome to the game! Enter your first guess above.</div>';
+            feedbackBox.innerHTML = '<div class="feedback-entry">Welcome to the game! Click "Start Game" to begin, then enter your first guess above.</div>';
+            
+            // Reset game state
+            gameState.gameStarted = false;
+            gameState.gameCompleted = false;
+            
+            // Enable/disable buttons
+            document.getElementById('start-game-btn').classList.remove('disabled');
+            document.getElementById('reset-game-btn').classList.add('disabled');
+            document.getElementById('guess-input').disabled = true;
             
             showPage('game-room-page');
-            
-            // Focus on guess input
-            document.getElementById('guess-input').focus();
+        }
+
+        async function startGame() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/rooms/${gameState.roomName}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        started: true
+                    })
+                });
+                
+                if (response.ok) {
+                    gameState.gameStarted = true;
+                    document.getElementById('game-status').textContent = 'In Progress';
+                    document.getElementById('start-game-btn').classList.add('disabled');
+                    document.getElementById('reset-game-btn').classList.remove('disabled');
+                    document.getElementById('guess-input').disabled = false;
+                    document.getElementById('guess-input').focus();
+                    
+                    const feedbackBox = document.getElementById('feedback-box');
+                    feedbackBox.innerHTML = '<div class="feedback-entry">Game started! Enter your first guess above.</div>';
+                } else {
+                    const errorText = await response.text();
+                    showError('guess-error', 'Failed to start game: ' + errorText);
+                }
+            } catch (error) {
+                console.error('Error starting game:', error);
+                showError('guess-error', 'Unable to connect to server: ' + error.message);
+            }
+        }
+
+        async function resetGame() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/rooms/${gameState.roomName}/reset-room`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        mastercode: true
+                    })
+                });
+                
+                if (response.ok) {
+                    const resetGameData = await response.json();
+                    // Reset game state
+                    gameState.closed = resetGameData.closed;
+                    gameState.gameStarted = resetGameData.started;
+                    gameState.gameCompleted = resetGameData.completed;
+                    gameState.remainingGuesses = resetGameData.max_guesses;
+                    
+                    // Update UI
+                    document.getElementById('guess-counter').textContent = gameState.remainingGuesses;
+                    document.getElementById('game-status').textContent = 'Ready to Start';
+                    document.getElementById('start-game-btn').classList.remove('disabled');
+                    document.getElementById('reset-game-btn').classList.add('disabled');
+                    document.getElementById('guess-input').disabled = true;
+                    document.getElementById('guess-input').value = '';
+                    clearError('guess-error');
+                    
+                    // Clear feedback
+                    const feedbackBox = document.getElementById('feedback-box');
+                    feedbackBox.innerHTML = '<div class="feedback-entry">Game reset! Click "Start Game" to begin a new round.</div>';
+                } else {
+                    const errorText = await response.text();
+                    showError('guess-error', 'Failed to reset game: ' + errorText);
+                }
+            } catch (error) {
+                console.error('Error resetting game:', error);
+                showError('guess-error', 'Unable to connect to server: ' + error.message);
+            }
         }
 
         async function submitGuess() {
             clearError('guess-error');
             
-            const guessInput = document.getElementById('guess-input');
-            const guess = guessInput.value.trim();
-            
-            // Basic validation
-            if (!guess) {
-                showError('guess-error', 'Please enter a guess');
+            if (!gameState.gameStarted) {
+                showError('guess-error', 'Please start the game first');
+                return;
+            }
+
+            if (gameState.gameCompleted) {
+                showError('guess-error', 'Game is completed. Please reset to play again.');
                 return;
             }
             
+            const guessInput = document.getElementById('guess-input');
+            const guess = guessInput.value.trim();
+            
             try {
-                // Send playerGuess object as JSON
                 const response = await fetch(`${API_BASE_URL}/rooms/${gameState.roomName}/submit-guess`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    credentials: 'include', // Important for HttpSession
+                    credentials: 'include',
                     body: JSON.stringify({
-                        guess: guess
+                        playerGuess: guess
                     })
                 });
                 
                 if (response.ok) {
-                    // Your backend returns feedback directly as a string
-                    const feedback = await response.text();
-                    handleGuessResponse(guess, feedback);
+                    const playerGuess = await response.json();
+                    handleGuessResponse(guess, playerGuess);
                 } else {
-                    // Handle different error response formats from Spring Boot
                     let errorMessage = 'Invalid guess';
                     try {
-                        const errorData = await response.json();
-                        // Handle different Spring Boot error response formats
-                        if (errorData.message) {
-                            errorMessage = errorData.message;
-                        } else if (errorData.error) {
-                            errorMessage = errorData.error;
-                        } else if (errorData.details) {
-                            errorMessage = errorData.details;
-                        } else if (typeof errorData === 'string') {
-                            errorMessage = errorData;
+                        const errorText = await response.text();
+                        if (errorText) {
+                            errorMessage = errorText;
                         }
                     } catch (parseError) {
-                        // If response isn't JSON, try to get text
-                        try {
-                            const errorText = await response.text();
-                            if (errorText) {
-                                errorMessage = errorText;
-                            } else {
-                                errorMessage = `Error ${response.status}: ${response.statusText}`;
-                            }
-                        } catch (textError) {
-                            errorMessage = `Error ${response.status}: ${response.statusText}`;
-                        }
+                        errorMessage = `Error ${response.status}: ${response.statusText}`;
                     }
                     showError('guess-error', errorMessage);
-                    return; // Don't clear input on error so user can see what they entered
+                    return;
                 }
             } catch (error) {
                 console.error('Error submitting guess:', error);
@@ -552,29 +614,35 @@
             guessInput.focus();
         }
 
-        function handleGuessResponse(guess, feedback) {
+        function handleGuessResponse(guess, playerGuess) {
             // Update remaining guesses
-            gameState.remainingGuesses--;
-            document.getElementById('guess-counter').textContent = gameState.remainingGuesses;
+            document.getElementById('guess-counter').textContent = playerGuess.remainingGuesses;
+            gameState.gameCompleted = playerGuess.correctGuess;
             
             // Add feedback to the feedback box
             const feedbackBox = document.getElementById('feedback-box');
             const feedbackEntry = document.createElement('div');
             feedbackEntry.className = 'feedback-entry';
+            
+            const guessNumber = gameState.maxGuesses - gameState.remainingGuesses;
             feedbackEntry.innerHTML = `
-                <strong>Guess ${gameState.maxGuesses - gameState.remainingGuesses}:</strong> ${guess}<br>
-                <strong>Feedback:</strong> ${feedback}
+                <strong>Feedback:</strong> ${playerGuess.feedback}
             `;
             
             feedbackBox.appendChild(feedbackEntry);
             feedbackBox.scrollTop = feedbackBox.scrollHeight;
             
             // Check if game is over
-            if (feedback.toLowerCase().includes('correct') || feedback.toLowerCase().includes('win')) {
+            if (gameState.gameCompleted === true) {
+                document.getElementById('game-status').textContent = 'Won!';
+                document.getElementById('guess-input').disabled = true;
                 setTimeout(() => {
                     alert('Congratulations! You won!');
                 }, 100);
             } else if (gameState.remainingGuesses <= 0) {
+                gameState.gameCompleted = true;
+                document.getElementById('game-status').textContent = 'Lost';
+                document.getElementById('guess-input').disabled = true;
                 setTimeout(() => {
                     alert('Game over! You\'ve run out of guesses.');
                 }, 100);
@@ -595,22 +663,6 @@
                 }
             });
         });
-
-        // Real-time updates (you can implement WebSocket connection here)
-        function startRealTimeUpdates() {
-            // Example WebSocket connection (uncomment and modify when ready)
-            /*
-            const socket = new WebSocket(`ws://localhost:8080/ws/rooms/${gameState.roomName}`);
-            
-            socket.onmessage = function(event) {
-                const data = JSON.parse(event.data);
-                // Handle real-time updates from other players
-                if (data.type === 'guess_update') {
-                    handleGuessResponse(data.guess, data.feedback);
-                }
-            };
-            */
-        }
     </script>
 </body>
 </html>

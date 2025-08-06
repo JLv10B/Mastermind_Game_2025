@@ -528,7 +528,7 @@ components:
               username: "jane123"
         completed:
           type: boolean
-          description: Tracks if the game has been completed or not
+          description: A boolean that represents if a game has completed.
       required:
         - roomName
         - host
@@ -591,9 +591,17 @@ components:
           type: integer
           description: How many digits of the guess match with the mastercode
           example: 2
+        feedback:
+          type: string
+          description: Detailed feedback including the player's guess, exactmatches, matching numbers, and remaining guesses.
+        remaining guesses:
+          type: integer
+          description: Number of guesses remaining
       required:
         - guess
         - exactMatches
+        - feedback
+        - remaining guesses
 
     PlayerGuessDTO:
       properties:
@@ -637,6 +645,9 @@ components:
         started:
           type: boolean
           description: A boolean that determines whether players can submit guesses. If started is false, players cannot submit guesses. If started is true players can submit guesses and closed will also be set to true as once the room starts no players are allowed to join the room.
+        completed:
+          type: boolean
+          description: A boolean that represents if a game has completed.
         guessList:
           type: object
           description: A list of the player's guesses

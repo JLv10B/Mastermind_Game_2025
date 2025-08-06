@@ -63,7 +63,7 @@ public class RoomService {
         if (roomOptional.isPresent()) {
             Room room = roomOptional.get();
             List<PlayerGuess> guessList = room.getParticipants().get(session.getAttribute("username").toString().toLowerCase());
-            return new PlayerRoomViewDTO(roomName, room.getHost(), room.getDifficulty(), room.getMaxGuesses(), room.isClosed(), room.isStarted(), guessList);
+            return new PlayerRoomViewDTO(roomName, room.getHost(), room.getDifficulty(), room.getMaxGuesses(), room.isClosed(), room.isStarted(), room.isCompleted(), guessList);
         } else {
             throw new ResourceNotFoundException(roomName + " not found");
         }
@@ -186,7 +186,7 @@ public class RoomService {
             }
             roomRepository.saveRoom(updatedRoom);
             List<PlayerGuess> guessList = participants.get(session.getAttribute("username").toString().toLowerCase());
-            return new PlayerRoomViewDTO(roomName, updatedRoom.getHost(), updatedRoom.getDifficulty(), updatedRoom.getMaxGuesses(), updatedRoom.isClosed(), updatedRoom.isStarted(), guessList);
+            return new PlayerRoomViewDTO(roomName, updatedRoom.getHost(), updatedRoom.getDifficulty(), updatedRoom.getMaxGuesses(), updatedRoom.isClosed(), updatedRoom.isStarted(), updatedRoom.isCompleted(), guessList);
         } else {
             throw new InvalidInputException("Unable to process input");
         }
@@ -195,31 +195,34 @@ public class RoomService {
 
 
     public PlayerGuess submitGuess(String roomName, PlayerGuessDTO playerGuessDTO, HttpSession session) {
-        String playerGuesString = playerGuessDTO.getPlayerGuess();
+        String playerGuessString = playerGuessDTO.getPlayerGuess();
         Room room = getRoom(roomName);
         if (!room.isStarted()) {
             throw new GameNotStartedException("Game has not started yet");
         }
         if (room.isCompleted()) {
-            return new PlayerGuess(playerGuesString, 0, "Game completed, reset the game to play again");
+            return new PlayerGuess(playerGuessString, false, "Game completed, reset the game to play again", 0);
         }
-        if (playerGuessDTO == null || playerGuesString.length() != room.getDifficulty()) {
-            throw new InvalidInputException("Please submit the correct number of digits");
+        if (playerGuessString.length() == 0) {
+            throw new InvalidInputException("You must enter a guess");
         }
-        if (!playerGuesString.matches("\\d+")) {
+        if (!playerGuessString.matches("\\d+")) {
             throw new InvalidInputException("Please submit only numbers");
+        }
+        if (playerGuessDTO == null || playerGuessString.length() != room.getDifficulty()) {
+            throw new InvalidInputException("Please submit the correct number of digits");
         }
         Map<String, List<PlayerGuess>> participants = room.getParticipants();
         List<PlayerGuess> playerGuessList = participants.get(session.getAttribute("username").toString().toLowerCase());
         int currentGuessCount = room.getMaxGuesses() - playerGuessList.size();
         if(currentGuessCount <= 0) {
-            return new PlayerGuess(playerGuesString, 0, "No guesses remaining, reset the game to play again");
+            return new PlayerGuess(playerGuessString, false, "No guesses remaining, reset the game to play again", 0);
         }
-        int remainingGuesses = currentGuessCount--;
-        PlayerGuess playerGuess = createGuess(playerGuesString, room.getMastercode(), remainingGuesses);
+        int remainingGuesses = currentGuessCount - 1;
+        PlayerGuess playerGuess = createGuess(playerGuessString, room.getMastercode(), remainingGuesses);
         playerGuessList.add(playerGuess);
 
-        if (playerGuess.getExactMatches() == 4) {
+        if (playerGuess.isCorrectGuess()) {
             room.setCompleted(true);
         }
 
@@ -263,7 +266,9 @@ private PlayerGuess createGuess(String playerGuessString, String masterCode, int
     }
 
     String gamestateString;
+    boolean correctGuess = false;
     if (exactMatch == masterCode.length()) {
+        correctGuess = true;
         gamestateString = "Congratulations, you win!";
     } else if (remainingGuesses <= 0) {
         gamestateString = "Sorry no more guesses left, you lose. Want to play again?";
@@ -272,7 +277,7 @@ private PlayerGuess createGuess(String playerGuessString, String masterCode, int
     }
 
     feedback = String.format("You guessed %s. You got %d correct with %d in the correct %s. You have %d %s remaining. %s", playerGuessString, matchingNumbers, exactMatch, locationString, remainingGuesses, guessesString, gamestateString);
-    return new PlayerGuess(playerGuessString, exactMatch, feedback);
+    return new PlayerGuess(playerGuessString, correctGuess, feedback, remainingGuesses);
 }
     
 

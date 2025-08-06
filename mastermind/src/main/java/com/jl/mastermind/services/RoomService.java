@@ -86,6 +86,16 @@ public class RoomService {
     }
 
 
+    private boolean adminDeleteRoom(String roomName) {
+        Optional<Room> roomOptional = roomRepository.findByRoomName(roomName.toLowerCase());
+        if (roomOptional.isPresent()) {
+            return roomRepository.deleteRoom(roomName.toLowerCase());
+        } else {
+            throw new ResourceNotFoundException(roomName + " not found");
+        }
+    }
+
+
     public Room updateRoom(String roomName, RoomUpdateDTO roomUpdateDTO) throws URISyntaxException {
         Room updatedRoom = getRoom(roomName);
         if (updatedRoom.isStarted() == true) {
@@ -162,11 +172,20 @@ public class RoomService {
     }
 
 
-    public Room removeParticipant(String roomName, Player player) {
+    public boolean removeParticipant(String roomName, Player player) {
+        boolean removed;
         Room room = getRoom(roomName);
         Map<String, List<PlayerGuess>> participants = room.getParticipants();
         participants.remove(player.getUsername().toLowerCase());
-        return room;
+        if (!participants.containsKey(player.getUsername().toLowerCase())) {
+            removed = true;
+        } else {
+            removed = false;
+        }
+        if (participants.size() == 0) {
+            adminDeleteRoom(roomName);
+        }
+        return removed;
     }
 
 

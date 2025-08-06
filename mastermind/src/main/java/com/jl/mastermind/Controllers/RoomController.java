@@ -89,9 +89,9 @@ public class RoomController {
 
 
     @DeleteMapping("/{roomName}/participants")
-    public ResponseEntity<Room> removeParticipant(@PathVariable String roomName, @RequestBody Player player) {
-        Room updatedRoom = roomService.removeParticipant(roomName, player);
-        return ResponseEntity.status(HttpStatus.CREATED).body(updatedRoom);
+    public ResponseEntity<Void> removeParticipant(@PathVariable String roomName, @RequestBody Player player) {
+        roomService.removeParticipant(roomName, player);
+        return ResponseEntity.noContent().build();
     }
 
 

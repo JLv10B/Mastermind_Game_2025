@@ -19,13 +19,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import com.jl.mastermind.dto.PlayerRoomViewDTO;
+import com.jl.mastermind.dto.RoomCreationDTO;
 import com.jl.mastermind.dto.RoomUpdateDTO;
 import com.jl.mastermind.entities.Player;
 import com.jl.mastermind.entities.PlayerGuess;
 import com.jl.mastermind.entities.Room;
+import com.jl.mastermind.exceptions.*;
 import com.jl.mastermind.exceptions.InsufficientPermissionsException;
-import com.jl.mastermind.exceptions.InvalidInputException;
-import com.jl.mastermind.exceptions.ResourceNotFoundException;
 import com.jl.mastermind.repositories.RoomRepository;
 import com.jl.mastermind.services.PlayerService;
 import com.jl.mastermind.services.RoomService;
@@ -66,11 +66,8 @@ public class RoomServiceUnitTest {
         this.mockPlayer3 = new Player("PLAYER3");
         this.participants = new ConcurrentHashMap<>();
         this.guessList = new ArrayList<>();
-        participants.put(mockPlayer1.getUsername().toLowerCase(), guessList);
-        participants.put(mockPlayer2.getUsername().toLowerCase(), guessList);
-        participants.put(mockPlayer3.getUsername().toLowerCase(), guessList);
-        this.mockRoom1 = new Room("ROOM1", mockPlayer1, 4, 10, false, false, false, "1234", participants);
-        this.mockRoom2 = new Room("ROOM2", mockPlayer2, 4, 10, false, false, false, "1234", participants);
+        this.mockRoom1 = new Room("ROOM1", mockPlayer1, 4, false, false, "1234", guessList);
+        this.mockRoom2 = new Room("ROOM2", mockPlayer2, 4, false, false, "1234", guessList);
         mockRoomMap.put(mockRoom1.getRoomName().toLowerCase(), mockRoom1);
         mockRoomMap.put(mockRoom2.getRoomName().toLowerCase(), mockRoom2);
     }
@@ -111,7 +108,6 @@ public class RoomServiceUnitTest {
 
     @Test
     void testGetRoomPublic_Exists() {
-        session.setAttribute("username", mockPlayer1.getUsername());
         String roomName = mockRoom1.getRoomName();
         when(roomRepository.findByRoomName(roomName.toLowerCase())).thenReturn(Optional.of(mockRoom1));
         when(session.getAttribute("username")).thenReturn(mockPlayer1.getUsername());
@@ -122,9 +118,17 @@ public class RoomServiceUnitTest {
         assertEquals(testRoomView.getRoomName(), mockRoom1.getRoomName());
         assertEquals(testRoomView.getHost(), mockRoom1.getHost());
         assertEquals(testRoomView.getDifficulty(), mockRoom1.getDifficulty());
-        assertEquals(testRoomView.getMaxGuesses(), mockRoom1.getMaxGuesses());
-        assertEquals(testRoomView.isClosed(), mockRoom1.isClosed());
         assertEquals(testRoomView.isStarted(), mockRoom1.isStarted());
+    }
+
+    @Test
+    void testGetRoomPublic_NoPerms() {
+        String username = "Todd";
+        String roomName = mockRoom1.getRoomName();
+        when(roomRepository.findByRoomName(roomName.toLowerCase())).thenReturn(Optional.of(mockRoom1));
+        when(session.getAttribute("username")).thenReturn(username);
+
+        assertThrows(InsufficientPermissionsException.class, () -> roomService.getRoomPublic(roomName, session));
     }
 
     @Test
@@ -172,7 +176,7 @@ public class RoomServiceUnitTest {
     void testUpdateRoom_RoomStarted() throws URISyntaxException {
         String roomName = mockRoom1.getRoomName();
         mockRoom1.setStarted(true);
-        RoomUpdateDTO roomUpdateDTO = new RoomUpdateDTO(6, 10, null, null, null);
+        RoomUpdateDTO roomUpdateDTO = new RoomUpdateDTO(6, null, null);
         when(roomRepository.findByRoomName(roomName.toLowerCase())).thenReturn(Optional.of(mockRoom1));
 
         assertThrows(InsufficientPermissionsException.class, () -> roomService.updateRoom(roomName, roomUpdateDTO));
@@ -181,7 +185,7 @@ public class RoomServiceUnitTest {
     @Test
     void testUpdateRoom_DifficultyValid() throws URISyntaxException {
         String roomName = mockRoom1.getRoomName();
-        RoomUpdateDTO roomUpdateDTO = new RoomUpdateDTO(6, null, null, null, null);
+        RoomUpdateDTO roomUpdateDTO = new RoomUpdateDTO(6, null, null);
         when(roomRepository.findByRoomName(roomName.toLowerCase())).thenReturn(Optional.of(mockRoom1));
         when(roomRepository.saveRoom(mockRoom1)).thenReturn(mockRoom1);
 
@@ -189,8 +193,6 @@ public class RoomServiceUnitTest {
 
         assertNotNull(updatedRoom);
         assertEquals(6, updatedRoom.getDifficulty());
-        assertEquals(10, updatedRoom.getMaxGuesses());
-        assertEquals(false, updatedRoom.isClosed());
         assertEquals(false, updatedRoom.isStarted());
         assertEquals("1234", updatedRoom.getMastercode());
         verify(roomRepository, times(1)).saveRoom(updatedRoom);
@@ -199,7 +201,7 @@ public class RoomServiceUnitTest {
     @Test
     void testUpdateRoom_DifficultyTooHigh() throws URISyntaxException {
         String roomName = mockRoom1.getRoomName();
-        RoomUpdateDTO roomUpdateDTO = new RoomUpdateDTO(8, null, null, null, null);
+        RoomUpdateDTO roomUpdateDTO = new RoomUpdateDTO(8, null, null);
         when(roomRepository.findByRoomName(roomName.toLowerCase())).thenReturn(Optional.of(mockRoom1));
         
         assertThrows(InvalidInputException.class, () -> roomService.updateRoom(roomName, roomUpdateDTO));
@@ -208,70 +210,16 @@ public class RoomServiceUnitTest {
     @Test
     void testUpdateRoom_DifficultyTooLow() throws URISyntaxException {
         String roomName = mockRoom1.getRoomName();
-        RoomUpdateDTO roomUpdateDTO = new RoomUpdateDTO(2, null, null, null, null);
+        RoomUpdateDTO roomUpdateDTO = new RoomUpdateDTO(2, null, null);
         when(roomRepository.findByRoomName(roomName.toLowerCase())).thenReturn(Optional.of(mockRoom1));
         
         assertThrows(InvalidInputException.class, () -> roomService.updateRoom(roomName, roomUpdateDTO));
-    }
-
-    @Test
-    void testUpdateRoom_MaxGuessesValid() throws URISyntaxException {
-        String roomName = mockRoom1.getRoomName();
-        RoomUpdateDTO roomUpdateDTO = new RoomUpdateDTO(null, 15, null, null, null);
-        when(roomRepository.findByRoomName(roomName.toLowerCase())).thenReturn(Optional.of(mockRoom1));
-        when(roomRepository.saveRoom(mockRoom1)).thenReturn(mockRoom1);
-
-        Room updatedRoom = roomService.updateRoom(roomName, roomUpdateDTO);
-
-        assertNotNull(updatedRoom);
-        assertEquals(4, updatedRoom.getDifficulty());
-        assertEquals(15, updatedRoom.getMaxGuesses());
-        assertEquals(false, updatedRoom.isClosed());
-        assertEquals(false, updatedRoom.isStarted());
-        assertEquals("1234", updatedRoom.getMastercode());
-        verify(roomRepository, times(1)).saveRoom(updatedRoom);
-    }
-
-    @Test
-    void testUpdateRoom_MaxGuessesTooHigh() throws URISyntaxException {
-        String roomName = mockRoom1.getRoomName();
-        RoomUpdateDTO roomUpdateDTO = new RoomUpdateDTO(null, 100, null, null, null);
-        when(roomRepository.findByRoomName(roomName.toLowerCase())).thenReturn(Optional.of(mockRoom1));
-        
-        assertThrows(InvalidInputException.class, () -> roomService.updateRoom(roomName, roomUpdateDTO));
-    }
-
-    @Test
-    void testUpdateRoom_MaxGuessesTooLow() throws URISyntaxException {
-        String roomName = mockRoom1.getRoomName();
-        RoomUpdateDTO roomUpdateDTO = new RoomUpdateDTO(null, 2, null, null, null);
-        when(roomRepository.findByRoomName(roomName.toLowerCase())).thenReturn(Optional.of(mockRoom1));
-        
-        assertThrows(InvalidInputException.class, () -> roomService.updateRoom(roomName, roomUpdateDTO));
-    }
-
-    @Test
-    void testUpdateRoom_setClosedValid() throws URISyntaxException {
-        String roomName = mockRoom1.getRoomName();
-        RoomUpdateDTO roomUpdateDTO = new RoomUpdateDTO(null, null, true, null, null);
-        when(roomRepository.findByRoomName(roomName.toLowerCase())).thenReturn(Optional.of(mockRoom1));
-        when(roomRepository.saveRoom(mockRoom1)).thenReturn(mockRoom1);
-
-        Room updatedRoom = roomService.updateRoom(roomName, roomUpdateDTO);
-
-        assertNotNull(updatedRoom);
-        assertEquals(4, updatedRoom.getDifficulty());
-        assertEquals(10, updatedRoom.getMaxGuesses());
-        assertEquals(true, updatedRoom.isClosed());
-        assertEquals(false, updatedRoom.isStarted());
-        assertEquals("1234", updatedRoom.getMastercode());
-        verify(roomRepository, times(1)).saveRoom(updatedRoom);
     }
 
     @Test
     void testUpdateRoom_setStartedValid() throws URISyntaxException {
         String roomName = mockRoom1.getRoomName();
-        RoomUpdateDTO roomUpdateDTO = new RoomUpdateDTO(null, null, null, true, null);
+        RoomUpdateDTO roomUpdateDTO = new RoomUpdateDTO(null, true, null);
         when(roomRepository.findByRoomName(roomName.toLowerCase())).thenReturn(Optional.of(mockRoom1));
         when(roomRepository.saveRoom(mockRoom1)).thenReturn(mockRoom1);
 
@@ -279,8 +227,7 @@ public class RoomServiceUnitTest {
 
         assertNotNull(updatedRoom);
         assertEquals(4, updatedRoom.getDifficulty());
-        assertEquals(10, updatedRoom.getMaxGuesses());
-        assertEquals(true, updatedRoom.isClosed());
+
         assertEquals(true, updatedRoom.isStarted());
         assertEquals("1234", updatedRoom.getMastercode());
         verify(roomRepository, times(1)).saveRoom(updatedRoom);
@@ -290,7 +237,7 @@ public class RoomServiceUnitTest {
     void testResetRoom_Valid() throws URISyntaxException {
         String roomName = mockRoom1.getRoomName();
         String roomHost = mockRoom1.getHost().getUsername();
-        RoomUpdateDTO roomUpdateDTO = new RoomUpdateDTO(null, null, null, null, true);
+        RoomUpdateDTO roomUpdateDTO = new RoomUpdateDTO(null, null, true);
         when(roomRepository.findByRoomName(roomName.toLowerCase())).thenReturn(Optional.of(mockRoom1));
         when(session.getAttribute("username")).thenReturn(roomHost);
         when(roomRepository.saveRoom(mockRoom1)).thenReturn(mockRoom1);
@@ -298,7 +245,6 @@ public class RoomServiceUnitTest {
         PlayerRoomViewDTO updatedRoomView = roomService.resetRoom(roomName, roomUpdateDTO, session);
 
         assertNotNull(updatedRoomView);
-        assertEquals(true, updatedRoomView.isClosed());
         assertEquals(false, updatedRoomView.isStarted());
         assertNotEquals("1234", mockRoom1.getMastercode());
         verify(roomRepository, times(1)).saveRoom(mockRoom1);
@@ -307,13 +253,47 @@ public class RoomServiceUnitTest {
     @Test
     void testResetRoom_InvalidUser() throws URISyntaxException {
         String roomName = mockRoom1.getRoomName();
-        String roomHost = mockRoom1.getHost().getUsername();
-        RoomUpdateDTO roomUpdateDTO = new RoomUpdateDTO(null, null, null, null, true);
+        String roomHost = "Todd";
+        RoomUpdateDTO roomUpdateDTO = new RoomUpdateDTO(null, null, true);
         when(roomRepository.findByRoomName(roomName.toLowerCase())).thenReturn(Optional.of(mockRoom1));
-        when(session.getAttribute("username")).thenReturn("Todd");
+        when(session.getAttribute("username")).thenReturn(roomHost);
 
         assertThrows(InsufficientPermissionsException.class, () -> roomService.resetRoom(roomName, roomUpdateDTO, session));
     }
 
-    //TODO: Create room, add/remove participant, submit guess, create guess, randompatterngenerator
+    @Test
+    void testCreateRoom_Valid() throws URISyntaxException {
+        Player testPlayer = new Player("Todd");
+        RoomCreationDTO testRoomCreationDTO = new RoomCreationDTO("testRoom", 4);
+        when(session.getAttribute("username")).thenReturn("Todd");
+        when(roomRepository.findByRoomName(testRoomCreationDTO.getRoomName().toLowerCase())).thenReturn(Optional.empty());
+        when(playerService.getPlayerByName(testPlayer.getUsername().toLowerCase())).thenReturn(testPlayer);
+        
+        Room createdTestRoom = roomService.createRoom(testRoomCreationDTO, session);
+
+        assertNotNull(createdTestRoom);
+        assertEquals(4, createdTestRoom.getDifficulty());
+        assertEquals(false, createdTestRoom.isStarted());
+        verify(roomRepository, times(1)).saveRoom(createdTestRoom);
+    }
+
+    @Test
+    void testCreateRoom_RoomExists() throws URISyntaxException {
+        Player testPlayer = new Player("Todd");
+        RoomCreationDTO testRoomCreationDTO = new RoomCreationDTO("ROOM1", 4);
+        when(session.getAttribute("username")).thenReturn(testPlayer.getUsername());
+        when(roomRepository.findByRoomName(testRoomCreationDTO.getRoomName().toLowerCase())).thenReturn(Optional.of(mockRoom1));
+        
+        assertThrows(NameAlreadyExistsException.class, () -> roomService.createRoom(testRoomCreationDTO, session));
+    }
+
+    @Test
+    void testCreateRoom_NotLoggedIn() throws URISyntaxException {
+        RoomCreationDTO testRoomCreationDTO = new RoomCreationDTO("ROOM1", 4);
+        when(session.getAttribute("username")).thenReturn(null);
+        
+        assertThrows(NoUserFoundException.class, () -> roomService.createRoom(testRoomCreationDTO, session));
+    }
+
+    //TODO: add/remove participant, submit guess, create guess, randompatterngenerator
 }

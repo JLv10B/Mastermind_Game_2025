@@ -46,17 +46,29 @@ public class PlayerService {
     }
 
 
-    public Player createPlayer(Player newPlayer, HttpSession session) {
-        if (session.getAttribute("username") != null) {
-            throw new InsufficientPermissionsException("You are alreayd logged in.");
-        }
+    // public Player createPlayer(Player newPlayer, HttpSession session) {
+    //     if (session.getAttribute("username") != null) {
+    //         throw new InsufficientPermissionsException("You are alreayd logged in.");
+    //     }
+    //     Optional<Player> playerOptional = playerRepository.getPlayerByName(newPlayer.getUsername().toLowerCase());
+    //     if (playerOptional.isPresent()){
+    //         throw new NameAlreadyExistsException(newPlayer.getUsername() + " already exists");
+    //     } else {
+    //         Player createdPlayer = playerRepository.createPlayer(newPlayer);
+    //         session.setAttribute("username", createdPlayer.getUsername());
+    //         return createdPlayer;
+    //     }
+    // }
+
+    public Player getOrCreatePlayer(Player newPlayer, HttpSession session) {
         Optional<Player> playerOptional = playerRepository.getPlayerByName(newPlayer.getUsername().toLowerCase());
         if (playerOptional.isPresent()){
-            throw new NameAlreadyExistsException(newPlayer.getUsername() + " already exists");
+            Player foundPlayer = playerOptional.get();
+            return foundPlayer;
         } else {
             Player createdPlayer = playerRepository.createPlayer(newPlayer);
             session.setAttribute("username", createdPlayer.getUsername());
             return createdPlayer;
-        }
+        }        
     }
 }

@@ -112,34 +112,28 @@ public class PlayerServiceUnitTest {
         verify(playerRepository, times(0)).deletePlayer(username);
     }
     
-    @Test
-    void testCreatePlayer_PlayerLoggedIn() {
-        String username = "TESTUSER";
-        Player mockPlayer = new Player(username);
-        when(session.getAttribute("username")).thenReturn(username);
-        
-        assertThrows(InsufficientPermissionsException.class, () -> playerService.createPlayer(mockPlayer, session));
-    }
 
     @Test
     void testCreatePlayer_UsernameRepeated() {
         String username = "TESTUSER";
         Player mockPlayer = new Player(username);
-        when(session.getAttribute("username")).thenReturn(null);
-        when(playerRepository.getPlayerByName(mockPlayer.getUsername().toLowerCase())).thenReturn(Optional.of(mockPlayer));
+        when(playerRepository.getPlayerByName(mockPlayer.getUsername().toLowerCase())).thenReturn(Optional.empty());
+        when(playerRepository.createPlayer(mockPlayer)).thenReturn(mockPlayer);
+    
+        Player testPlayer = playerService.getOrCreatePlayer(mockPlayer, session);
         
-        assertThrows(NameAlreadyExistsException.class, () -> playerService.createPlayer(mockPlayer, session));
+        assertNotNull(testPlayer);
+        assertEquals(mockPlayer.getUsername(), testPlayer.getUsername());
     }
     
     @Test
     void testCreatePlayer_PlayerDoesNotExist() {
         String username = "TESTUSER";
         Player mockPlayer = new Player(username);
-        when(session.getAttribute("username")).thenReturn(null);
         when(playerRepository.getPlayerByName(mockPlayer.getUsername().toLowerCase())).thenReturn(Optional.empty());
         when(playerRepository.createPlayer(mockPlayer)).thenReturn(mockPlayer);
     
-        Player testPlayer = playerService.createPlayer(mockPlayer, session);
+        Player testPlayer = playerService.getOrCreatePlayer(mockPlayer, session);
         
         assertNotNull(testPlayer);
         assertEquals(mockPlayer, testPlayer);

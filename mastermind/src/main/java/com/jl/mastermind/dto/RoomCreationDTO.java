@@ -22,17 +22,11 @@ public class RoomCreationDTO {
     @Max(value = MAX_DIFFICULTY, message = "Difficulty can't be higher than " + MAX_DIFFICULTY)
     private Integer difficulty;
     
-    @JsonProperty("max_guesses")
-    @Min(value = MIN_GUESSES, message = "You must have a minimum of " + MIN_GUESSES + " guesses")
-    private Integer maxGuesses;
     private boolean closed;
     
-    public RoomCreationDTO(String roomName, int difficulty, int maxGuesses, boolean closed,
-            String mastercode) {
+    public RoomCreationDTO(String roomName, int difficulty) {
         this.roomName = roomName;
         this.difficulty = difficulty;
-        this.maxGuesses = maxGuesses;
-        this.closed = closed;
     }
     
 }

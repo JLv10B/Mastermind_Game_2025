@@ -1,7 +1,6 @@
 package com.jl.mastermind.entities;
 
 import java.util.List;
-import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -29,26 +28,19 @@ public class Room {
     @Max(value = MAX_DIFFICULTY, message = "Difficulty can't be higher than " + MAX_DIFFICULTY)
     private int difficulty;
 
-    @JsonProperty("max_guesses")
-    private int maxGuesses;
-    private boolean closed;
     private boolean started;
     private boolean completed;
-
     private String mastercode;
-    private Map<String, List<PlayerGuess>> participants;
+    private List<PlayerGuess> guessList;
     
-    public Room(String roomName, Player host, int difficulty, int maxGuesses, boolean closed, boolean started, boolean completed,
-            String mastercode, Map<String, List<PlayerGuess>> participants) {
+    public Room(String roomName, Player host, int difficulty, boolean started, boolean completed, String mastercode, List<PlayerGuess> guessList) {
         this.roomName = roomName;
         this.host = host;
         this.difficulty = difficulty;
-        this.maxGuesses = maxGuesses;
-        this.closed = closed;
         this.started = started;
         this.completed = completed;
         this.mastercode = mastercode;
-        this.participants = participants;
+        this.guessList = guessList;
     }
     
 }

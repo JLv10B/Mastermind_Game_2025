@@ -81,20 +81,6 @@ public class RoomController {
     }
 
 
-    @PostMapping("/{roomName}/participants")
-    public ResponseEntity<Room> addParticipant(@PathVariable String roomName, @RequestBody Player player) {
-        Room updatedRoom = roomService.addParticipant(roomName, player);
-        return ResponseEntity.status(HttpStatus.CREATED).body(updatedRoom);
-    }
-
-
-    @DeleteMapping("/{roomName}/participants")
-    public ResponseEntity<Void> removeParticipant(@PathVariable String roomName, @RequestBody Player player) {
-        roomService.removeParticipant(roomName, player);
-        return ResponseEntity.noContent().build();
-    }
-
-
     @PostMapping("/{roomName}/reset-room")
     public ResponseEntity<PlayerRoomViewDTO> resetRoom(@PathVariable String roomName, @RequestBody RoomUpdateDTO roomUpdateDTO, HttpSession session) throws URISyntaxException {
         PlayerRoomViewDTO updatedRoom = roomService.resetRoom(roomName, roomUpdateDTO, session);

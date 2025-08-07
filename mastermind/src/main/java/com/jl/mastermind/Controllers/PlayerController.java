@@ -23,6 +23,7 @@ import jakarta.validation.Valid;
 public class PlayerController {
     private final PlayerService playerService;
 
+    
     public PlayerController(PlayerService playerService) {
         this.playerService = playerService;
     }
@@ -53,8 +54,8 @@ public class PlayerController {
 
 
     @PostMapping("/create-player")
-    public ResponseEntity<Player> createPlayer(@Valid @RequestBody Player newPlayer, HttpSession session) {
-        Player createdPlayer = playerService.createPlayer(newPlayer, session);
+    public ResponseEntity<Player> getOrCreatePlayer(@Valid @RequestBody Player newPlayer, HttpSession session) {
+        Player createdPlayer = playerService.getOrCreatePlayer(newPlayer, session);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdPlayer);
     }
 }

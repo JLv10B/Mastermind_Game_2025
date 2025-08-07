@@ -295,5 +295,5 @@ public class RoomServiceTest {
         assertThrows(NoUserFoundException.class, () -> roomService.createRoom(testRoomCreationDTO, session));
     }
 
-    //TODO: add/remove participant, submit guess, create guess, randompatterngenerator
+    //TODO: submit guess, create guess, randompatterngenerator
 }

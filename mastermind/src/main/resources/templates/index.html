@@ -261,26 +261,7 @@
                     <option value="6">Hard (6 Digits)</option>
                 </select>
             </div>
-            
-            <div class="form-group">
-                <label for="max-guesses">Maximum Guesses:</label>
-                <input type="number" id="max-guesses" value="10">
-                <div id="max-guesses-error" class="error"></div>
-            </div>
-            
-            <div class="form-group">
-                <label>Game Mode:</label>
-                <div class="radio-group">
-                    <div class="radio-option">
-                        <input type="radio" id="singleplayer" name="game-mode" value="true" checked>
-                        <label for="singleplayer">Singleplayer (Closed Room)</label>
-                    </div>
-                    <div class="radio-option">
-                        <input type="radio" id="multiplayer" name="game-mode" value="false">
-                        <label for="multiplayer">Multiplayer (Open Room)</label>
-                    </div>
-                </div>
-            </div>
+        
             
             <button onclick="createRoom()">Create Room</button>
             <div id="room-creation-error" class="error"></div>
@@ -337,7 +318,6 @@
             roomName: '',
             difficulty: 4,
             maxGuesses: 10,
-            closed: true,
             remainingGuesses: 10,
             gameStarted: false,
             gameCompleted: false
@@ -405,15 +385,11 @@
             }
         }
 
-        // Room creation functions
         async function createRoom() {
             clearAllErrors();
             
             const roomName = document.getElementById('room-name').value.trim();
             const difficulty = parseInt(document.getElementById('difficulty').value);
-            const maxGuesses = parseInt(document.getElementById('max-guesses').value);
-            const closed = document.querySelector('input[name="game-mode"]:checked').value === 'true';
-            
             
             try {
                 const response = await fetch(`${API_BASE_URL}/rooms/create-room`, {
@@ -425,19 +401,16 @@
                     body: JSON.stringify({
                         room_name: roomName,
                         difficulty: difficulty,
-                        max_guesses: maxGuesses,
-                        closed: closed
+
                     })
                 });
                 
                 if (response.ok) {
                     const roomData = await response.json();
-                    // Update game state
+
                     gameState.roomName = roomData.room_name;
                     gameState.difficulty = roomData.difficulty;
-                    gameState.maxGuesses = roomData.max_guesses;
-                    gameState.closed = roomData.closed;
-                    gameState.remainingGuesses = roomData.max_guesses;
+                    gameState.remainingGuesses = 10;
                     initializeGameRoom();
                 } else {
                     let errorMessage = 'Failed to create room';
@@ -525,19 +498,17 @@
                     },
                     credentials: 'include',
                     body: JSON.stringify({
-                        mastercode: true
+                        resetMastercode: true
                     })
                 });
                 
                 if (response.ok) {
                     const resetGameData = await response.json();
-                    // Reset game state
-                    gameState.closed = resetGameData.closed;
+
                     gameState.gameStarted = resetGameData.started;
                     gameState.gameCompleted = resetGameData.completed;
-                    gameState.remainingGuesses = resetGameData.max_guesses;
+                    gameState.remainingGuesses = 10;
                     
-                    // Update UI
                     document.getElementById('guess-counter').textContent = gameState.remainingGuesses;
                     document.getElementById('game-status').textContent = 'Ready to Start';
                     document.getElementById('start-game-btn').classList.remove('disabled');
@@ -546,7 +517,7 @@
                     document.getElementById('guess-input').value = '';
                     clearError('guess-error');
                     
-                    // Clear feedback
+
                     const feedbackBox = document.getElementById('feedback-box');
                     feedbackBox.innerHTML = '<div class="feedback-entry">Game reset! Click "Start Game" to begin a new round.</div>';
                 } else {
@@ -635,17 +606,11 @@
             // Check if game is over
             if (gameState.gameCompleted === true) {
                 document.getElementById('game-status').textContent = 'Won!';
-                document.getElementById('guess-input').disabled = true;
-                setTimeout(() => {
-                    alert('Congratulations! You won!');
-                }, 100);
+                // document.getElementById('guess-input').disabled = true;
             } else if (gameState.remainingGuesses <= 0) {
                 gameState.gameCompleted = true;
                 document.getElementById('game-status').textContent = 'Lost';
-                document.getElementById('guess-input').disabled = true;
-                setTimeout(() => {
-                    alert('Game over! You\'ve run out of guesses.');
-                }, 100);
+                // document.getElementById('guess-input').disabled = true;
             }
         }
 

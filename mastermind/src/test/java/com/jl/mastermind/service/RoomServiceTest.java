@@ -35,7 +35,7 @@ import jakarta.servlet.http.HttpSession;
 
 @SpringBootTest
 @ExtendWith(MockitoExtension.class)
-public class RoomServiceUnitTest {
+public class RoomServiceTest {
 
     Map<String, Room> mockRoomMap;
     Player mockPlayer1;

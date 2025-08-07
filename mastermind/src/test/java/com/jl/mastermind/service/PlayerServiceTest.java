@@ -24,7 +24,7 @@ import jakarta.servlet.http.HttpSession;
 
 @SpringBootTest
 @ExtendWith(MockitoExtension.class)
-public class PlayerServiceUnitTest {
+public class PlayerServiceTest {
     @Mock
     private PlayerRepository playerRepository;
 

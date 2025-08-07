@@ -39,7 +39,7 @@ public class PlayerScoreRepositoryIntegrationTest {
     }
 
     @Test
-    void testScoreLeaderboardCreationGet() {
+    void testScoreLeaderboardCreationGetAll() {
         PlayerScore testScoreLeaderboard = new PlayerScore("testuser", 1, 4);
         PlayerScore testScoreLeaderboard2 = new PlayerScore("testuser1", 2, 4);
         PlayerScore testScoreLeaderboard3 = new PlayerScore("testuser2", 3, 4);

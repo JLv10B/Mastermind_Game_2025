@@ -18,7 +18,6 @@ import com.jl.mastermind.dto.PlayerGuessDTO;
 import com.jl.mastermind.dto.PlayerRoomViewDTO;
 import com.jl.mastermind.dto.RoomCreationDTO;
 import com.jl.mastermind.dto.RoomUpdateDTO;
-import com.jl.mastermind.entities.Player;
 import com.jl.mastermind.entities.PlayerGuess;
 import com.jl.mastermind.entities.Room;
 import com.jl.mastermind.services.RoomService;

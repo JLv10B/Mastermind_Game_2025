@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class ScoreLeaderboard {
+public class PlayerScore {
     @Id
     private String username;
     private int score;

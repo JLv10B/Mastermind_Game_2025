@@ -5,9 +5,7 @@ import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
-import com.jl.mastermind.exceptions.InsufficientPermissionsException;
-import com.jl.mastermind.exceptions.NameAlreadyExistsException;
-import com.jl.mastermind.exceptions.ResourceNotFoundException;
+import com.jl.mastermind.exceptions.*;
 import com.jl.mastermind.repositories.PlayerRepository;
 import com.jl.mastermind.entities.Player;
 

@@ -44,7 +44,7 @@ public class PlayerController {
 
     @DeleteMapping("/{username}")
     public ResponseEntity<Void> deletePlayer(@PathVariable String username) {
-        Boolean deleted = playerService.deletePlayer(username.toLowerCase());
+        boolean deleted = playerService.deletePlayer(username.toLowerCase());
         if (deleted == true) {
             return ResponseEntity.noContent().build();
         } else {

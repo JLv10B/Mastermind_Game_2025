@@ -76,7 +76,6 @@ public class PlayerScoreRepositoryIntegrationTest {
 
     @Test
     void testDelete() {
-        // playerScoreRepository.deleteAll();
         String username = "testuser";
         PlayerScore testScoreLeaderboard = PlayerScore.builder().username(username).score(1).difficulty(4).build();
         PlayerScore testScoreLeaderboard2 = PlayerScore.builder().username("testuser2").score(2).difficulty(4).build();

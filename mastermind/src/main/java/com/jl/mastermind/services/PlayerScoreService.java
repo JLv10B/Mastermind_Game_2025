@@ -19,7 +19,7 @@ public class PlayerScoreService {
     }
 
     public List<PlayerScore> getPlayerScores(String username) {
-        List<PlayerScore> playerScores = playerScoreRepository.findByUsername(username);
+        List<PlayerScore> playerScores = playerScoreRepository.findByUsernameOrderByDifficulty(username);
         if (playerScores.isEmpty()) {
             throw new ResourceNotFoundException("No scores found");
         }

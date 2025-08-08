@@ -7,11 +7,12 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.jl.mastermind.entities.PlayerScore;
 import com.jl.mastermind.services.PlayerScoreService;
 
-@Controller
+@RestController
 @RequestMapping("/scoreleaderboard")
 public class PlayerScoreController {
     private final PlayerScoreService playerScoreService;
@@ -21,7 +22,7 @@ public class PlayerScoreController {
     }
 
     @GetMapping("/difficulty/{difficulty}")
-    public ResponseEntity<List<PlayerScore>> getTop10Entity(@PathVariable String difficulty) {
+    public ResponseEntity<List<PlayerScore>> getTop10Scores(@PathVariable String difficulty) {
         List<PlayerScore> allScores = playerScoreService.getTop10(difficulty);
         return ResponseEntity.ok(allScores);
     }

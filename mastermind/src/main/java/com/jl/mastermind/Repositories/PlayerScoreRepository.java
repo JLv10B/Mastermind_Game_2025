@@ -12,6 +12,7 @@ import com.jl.mastermind.entities.PlayerScore;
 public interface PlayerScoreRepository extends JpaRepository<PlayerScore, Integer> {
 
     List<PlayerScore> findByUsername(String username);
+    List<PlayerScore> findByUsernameOrderByDifficulty(String username);
     Optional<PlayerScore> findByUsernameAndDifficulty(String username, int difficulty);
     List<PlayerScore> findTop10ByDifficultyOrderByScoreDesc(int difficulty);
     void deleteByUsername(String username);

@@ -8,7 +8,16 @@ import org.springframework.web.bind.annotation.RequestMapping;
 public class GameController {
     @RequestMapping("/")
     public String home() {
-        return "index";
+        return "welcome-page";
+    }
+
+    @RequestMapping("/room-creation")
+    public String roomCreation() {
+        return "room-creation-page";
+    }
+    @RequestMapping("/game-room")
+    public String gameRoom() {
+        return "game-room-page";
     }
     
 }

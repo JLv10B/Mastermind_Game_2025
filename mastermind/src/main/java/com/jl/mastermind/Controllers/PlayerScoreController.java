@@ -12,7 +12,7 @@ import com.jl.mastermind.entities.PlayerScore;
 import com.jl.mastermind.services.PlayerScoreService;
 
 @Controller
-@RequestMapping("/ScoreLeaderboard")
+@RequestMapping("/scoreleaderboard")
 public class PlayerScoreController {
     private final PlayerScoreService playerScoreService;
 

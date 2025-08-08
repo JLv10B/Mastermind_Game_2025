@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mastermind Game - Create Room</title>
+    <style>
+        /* All CSS from the original file is included for consistent styling */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f4f8;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #333;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            min-width: 400px;
+            max-width: 95%;
+            width: 100%;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        .page {
+            display: none;
+            animation: fadeIn 0.5s ease-in;
+            padding: 20px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .page.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1 {
+            text-align: center;
+            color: #4a5568;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            font-weight: 300;
+        }
+
+        h2 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 25px;
+            font-size: 1.8em;
+        }
+
+        h3 {
+            color: #4a5568;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #4a5568;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .back-button {
+            width: auto;
+            padding: 10px 20px;
+            font-size: 14px;
+            background: linear-gradient(45deg, #e2e8f0, #cbd5e0);
+            color: #4a5568;
+            margin-bottom: 20px;
+        }
+
+        .back-button:hover {
+            background: linear-gradient(45deg, #cbd5e0, #a0aec0);
+            transform: translateY(-1px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .scoreboards-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            width: 95%;
+            max-width: 1200px;
+            justify-content: center;
+        }
+        
+        .top-scores-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+        
+        .scoreboard {
+            background: #f7fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            flex: 1;
+        }
+
+        .scoreboard h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+            text-align: center;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 10px;
+        }
+        
+        .score-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .score-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: white;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            font-size: 14px;
+            transition: transform 0.2s ease;
+        }
+
+        .score-item:hover {
+            transform: translateX(2px);
+        }
+
+        .score-rank {
+            font-weight: bold;
+            color: #667eea;
+            min-width: 25px;
+        }
+
+        .score-name {
+            flex: 1;
+            margin: 0 10px;
+            font-weight: 600;
+            color: #4a5568;
+        }
+
+        .score-value {
+            font-weight: bold;
+            color: #38a169;
+        }
+
+        .score-difficulty {
+            font-size: 12px;
+            color: #718096;
+            margin-left: 8px;
+        }
+
+        .your-score {
+            background: linear-gradient(45deg, #667eea10, #764ba210);
+            border-left-color: #764ba2;
+        }
+
+        .your-score .score-name {
+            color: #667eea;
+        }
+
+        /* Game Room Styles */
+        .game-layout {
+            display: grid;
+            grid-template-columns: 1fr 200px;
+            gap: 30px;
+            align-items: start;
+        }
+
+        .game-main {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            width: 100%;
+        }
+
+        .game-sidebar {
+            background: #f7fafc;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .guess-counter {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .feedback-box {
+            background: #f7fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 20px;
+            min-height: 150px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .feedback-entry {
+            margin-bottom: 15px;
+            padding: 10px;
+            background: white;
+            border-radius: 5px;
+            border-left: 4px solid #667eea;
+        }
+
+        .guess-input {
+            display: flex;
+            gap: 10px;
+        }
+
+        .guess-input input {
+            flex: 1;
+        }
+
+        .guess-input button {
+            width: auto;
+            padding: 15px 30px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .controls button {
+            width: auto;
+            padding: 10px 20px;
+            font-size: 14px;
+        }
+
+        @media (max-width: 1024px) {
+            .game-layout {
+                grid-template-columns: 1fr;
+            }
+            .scoreboards-container {
+                flex-direction: column;
+                gap: 15px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+                min-width: auto;
+            }
+        }
+
+        .error {
+            color: #e53e3e;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        .success {
+            color: #38a169;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        .disabled {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .empty-scores {
+            text-align: center;
+            color: #718096;
+            font-style: italic;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Room Creation Page -->
+        <div id="room-creation-page" class="page active">
+            <div class="main-content">
+                <h2>Create Game Room</h2>
+                <div class="form-group">
+                    <label for="room-name">Room Name:</label>
+                    <input type="text" id="room-name" placeholder="Enter room name">
+                    <div id="room-name-error" class="error"></div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="difficulty">Difficulty:</label>
+                    <select id="difficulty">
+                        <option value="4">Easy (4 Digits)</option>
+                        <option value="5">Medium (5 Digits)</option>
+                        <option value="6">Hard (6 Digits)</option>
+                    </select>
+                </div>
+            
+                <button onclick="createRoom()">Create Room</button>
+                <div id="room-creation-error" class="error"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Scoreboards Container moved outside the main game container -->
+    <div class="scoreboards-container">
+        <!-- Top Scores Scoreboard -->
+        <div class="scoreboard">
+            <h3>🏆 Top Scores</h3>
+            <div class="top-scores-container">
+                <div class="scoreboard-inner">
+                    <h3>Easy (4 Digits)</h3>
+                    <div class="score-list" id="top-scores-list-4">
+                        <div class="empty-scores">Loading scores...</div>
+                    </div>
+                </div>
+                <div class="scoreboard-inner">
+                    <h3>Medium (5 Digits)</h3>
+                    <div class="score-list" id="top-scores-list-5">
+                        <div class="empty-scores">Loading scores...</div>
+                    </div>
+                </div>
+                <div class="scoreboard-inner">
+                    <h3>Hard (6 Digits)</h3>
+                    <div class="score-list" id="top-scores-list-6">
+                        <div class="empty-scores">Loading scores...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Player's Scores Scoreboard -->
+        <div class="scoreboard">
+            <h3>📊 Your Scores</h3>
+            <div class="score-list" id="player-scores-list">
+                <div class="empty-scores">Loading your scores...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game state and API URL from the original file
+        let gameState = {
+            username: 'GuestUser', // Placeholder username. In a real app, this would be passed from the welcome page.
+            roomName: '',
+            difficulty: 4,
+            maxGuesses: 10,
+            remainingGuesses: 10,
+            gameStarted: false,
+            gameCompleted: false
+        };
+
+        function getUrlParams() {
+            const params = {};
+            const queryString = window.location.search;
+            const urlParams = new URLSearchParams(queryString);
+            for (const [key, value] of urlParams.entries()) {
+                params[key] = value;
+            }
+            return params;
+        }
+        const API_BASE_URL = 'http://localhost:8080';
+
+        // Utility functions
+        function showError(elementId, message) {
+            const errorElement = document.getElementById(elementId);
+            if (errorElement) {
+                errorElement.textContent = message;
+            }
+        }
+
+        function clearAllErrors() {
+            document.querySelectorAll('.error').forEach(el => el.textContent = '');
+        }
+
+        // Scoreboard functions
+        async function refreshScoreboards() {
+            await loadTopScores();
+            await loadPlayerScores();
+        }
+
+        async function loadTopScores() {
+            try {
+                const topScoresPromises = [4, 5, 6].map(boardId =>
+                    fetch(`${API_BASE_URL}/scoreleaderboard/difficulty/${boardId}`).then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status} for leaderboard ${boardId}`);
+                        }
+                        return response.json();
+                    })
+                );
+                
+                const [scores4, scores5, scores6] = await Promise.all(topScoresPromises);
+                
+                updateTopScoresList(scores4, 'top-scores-list-4');
+                updateTopScoresList(scores5, 'top-scores-list-5');
+                updateTopScoresList(scores6, 'top-scores-list-6');
+
+            } catch (error) {
+                console.error('Error loading top leaderboards:', error);
+                ['top-scores-list-4', 'top-scores-list-5', 'top-scores-list-6'].forEach(id => {
+                    const listElement = document.getElementById(id);
+                    if (listElement) {
+                        listElement.innerHTML = `<div class="empty-scores">Failed to load top scores.</div>`;
+                    }
+                });
+            }
+        }
+
+        async function loadPlayerScores() {
+            const params = getUrlParams();
+            gameState.username = params.user;
+            if (!gameState.username) {
+                console.log('No username to fetch player scores.');
+                updatePlayerScoresList([]);
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/scoreleaderboard/username/${gameState.username}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status} for player ${gameState.username}`);
+                }
+                const playerScores = await response.json();
+                updatePlayerScoresList(playerScores);
+            } catch (error) {
+                console.error('Error loading player scores:', error);
+                document.getElementById('player-scores-list').innerHTML = `<div class="empty-scores">Failed to load your scores.</div>`;
+            }
+        }
+
+        function updateTopScoresList(scores, listId) {
+            const scoresList = document.getElementById(listId);
+            if (!scoresList) return;
+            scoresList.innerHTML = '';
+            
+            if (scores && scores.length > 0) {
+                scores.forEach((score, index) => {
+                    const scoreItem = document.createElement('div');
+                    scoreItem.className = 'score-item';
+                    scoreItem.innerHTML = `
+                        <span class="score-rank">#${index + 1}</span>
+                        <span class="score-name">${score.username}</span>
+                        <span class="score-value">${score.score}</span>
+                    `;
+                    scoresList.appendChild(scoreItem);
+                });
+            } else {
+                scoresList.innerHTML = '<div class="empty-scores">No scores yet!</div>';
+            }
+        }
+
+        function updatePlayerScoresList(scores) {
+            const scoresList = document.getElementById('player-scores-list');
+            if (!scoresList) return;
+            scoresList.innerHTML = '';
+            
+            if (scores && scores.length > 0) {
+                scores.forEach((score, index) => {
+                    const scoreItem = document.createElement('div');
+                    scoreItem.className = 'score-item your-score';
+                    scoreItem.innerHTML = `
+                        <span class="score-rank">#${index + 1}</span>
+                        <span class="score-name">${score.description || 'Game ' + (index + 1)}</span>
+                        <span class="score-value">${score.score}<span class="score-difficulty">(${score.difficulty}D)</span></span>
+                    `;
+                    scoresList.appendChild(scoreItem);
+                });
+            } else {
+                scoresList.innerHTML = '<div class="empty-scores">No games played yet!</div>';
+            }
+        }
+
+        // Room creation function
+        async function createRoom() {
+            clearAllErrors();
+            
+            const roomName = document.getElementById('room-name').value.trim();
+            const difficulty = parseInt(document.getElementById('difficulty').value);
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/rooms/create-room`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        room_name: roomName,
+                        difficulty: difficulty,
+                    })
+                });
+                
+                if (response.ok) {
+                    const roomData = await response.json();
+                    gameState.roomName = roomData.room_name;
+                    gameState.difficulty = roomData.difficulty;
+                    
+                    sessionStorage.setItem('gameState', JSON.stringify(gameState));
+                    window.location.href = '/game-room';
+                } else {
+                    let errorMessage = 'Failed to create room';
+                    try {
+                        const errorText = await response.text();
+                        if (errorText) {
+                            errorMessage = errorText;
+                        }
+                    } catch (parseError) {
+                        errorMessage = `Error ${response.status}: ${response.statusText}`;
+                    }
+                    showError('room-creation-error', errorMessage);
+                }
+            } catch (error) {
+                console.error('Error creating room:', error);
+                showError('room-creation-error', 'Unable to connect to server: ' + error.message);
+            }
+        }
+
+        // Allow Enter key to create a room
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('room-name').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    createRoom();
+                }
+            });
+            // Initial load of scoreboards
+            refreshScoreboards();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mastermind Game - Welcome</title>
+    <style>
+        /* All CSS from the original file is included for consistent styling */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f4f8;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #333;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            min-width: 400px;
+            max-width: 95%;
+            width: 100%;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        .page {
+            display: none;
+            animation: fadeIn 0.5s ease-in;
+            padding: 20px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .page.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1 {
+            text-align: center;
+            color: #4a5568;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            font-weight: 300;
+        }
+
+        h2 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 25px;
+            font-size: 1.8em;
+        }
+
+        h3 {
+            color: #4a5568;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #4a5568;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .error {
+            color: #e53e3e;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Welcome Page -->
+        <div id="welcome-page" class="page active">
+            <h1>🎯 Mastermind Game</h1>
+            <div class="form-group">
+                <label for="username">Enter your username:</label>
+                <input type="text" id="username" placeholder="Your username">
+                <div id="username-error" class="error"></div>
+            </div>
+            <button onclick="proceedToRoomCreation()">Continue</button>
+        </div>
+    </div>
+    <script>
+        // Game state and API URL from the original file
+        let gameState = {
+            username: '',
+            roomName: '',
+            difficulty: 4,
+            maxGuesses: 10,
+            remainingGuesses: 10,
+            gameStarted: false,
+            gameCompleted: false
+        };
+        const API_BASE_URL = 'http://localhost:8080';
+
+        // Utility functions
+        function showError(elementId, message) {
+            document.getElementById(elementId).textContent = message;
+        }
+
+        function clearAllErrors() {
+            document.querySelectorAll('.error').forEach(el => el.textContent = '');
+        }
+
+        // Welcome page function
+        async function proceedToRoomCreation() {
+            clearAllErrors();
+            const username = document.getElementById('username').value.trim();
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/players/create-player`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        username: username
+                    })
+                });
+                
+                if (response.ok) {
+                    const player = await response.json();
+                    gameState.username = player.username;
+                    
+                    sessionStorage.setItem('gameState', JSON.stringify(gameState));
+                    window.location.href = '/room-creation';
+                } else {
+                    let errorMessage = 'Failed to create player';
+                    try {
+                        const errorText = await response.text();
+                        if (errorText) {
+                            errorMessage = errorText;
+                        }
+                    } catch (parseError) {
+                        errorMessage = `Error ${response.status}: ${response.statusText}`;
+                    }
+                    showError('username-error', errorMessage);
+                }
+            } catch (error) {
+                console.error('Error creating player:', error);
+                showError('username-error', 'Unable to connect to server: ' + error.message);
+            }
+        }
+
+        // Allow Enter key to submit username
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('username').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    proceedToRoomCreation();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -19,6 +19,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
+import com.jl.mastermind.dto.PlayerGuessDTO;
 import com.jl.mastermind.dto.PlayerRoomViewDTO;
 import com.jl.mastermind.dto.RoomCreationDTO;
 import com.jl.mastermind.dto.RoomUpdateDTO;
@@ -27,6 +28,7 @@ import com.jl.mastermind.entities.PlayerGuess;
 import com.jl.mastermind.entities.Room;
 import com.jl.mastermind.exceptions.*;
 import com.jl.mastermind.repositories.RoomRepository;
+import com.jl.mastermind.services.PlayerScoreService;
 import com.jl.mastermind.services.PlayerService;
 import com.jl.mastermind.services.RoomService;
 
@@ -43,12 +45,15 @@ public class RoomServiceTest {
     Player mockPlayer2;
     Player mockPlayer3;
     Room mockRoom1;
-    Room mockRoom2;
+    Room mockStartedRoom;
     Map<String,List<PlayerGuess>> participants;
     List<PlayerGuess> guessList;
 
     @Mock
     private RoomRepository roomRepository;
+
+    @Mock
+    private PlayerScoreService playerScoreService;
 
     @Mock
     private HttpSession session;
@@ -68,9 +73,9 @@ public class RoomServiceTest {
         this.participants = new ConcurrentHashMap<>();
         this.guessList = new ArrayList<>();
         this.mockRoom1 = new Room("ROOM1", mockPlayer1, 4, false, false, "1234", guessList);
-        this.mockRoom2 = new Room("ROOM2", mockPlayer2, 4, false, false, "1234", guessList);
+        this.mockStartedRoom = new Room("ROOM2", mockPlayer2, 4, true, false, "1234", guessList);
         mockRoomMap.put(mockRoom1.getRoomName().toLowerCase(), mockRoom1);
-        mockRoomMap.put(mockRoom2.getRoomName().toLowerCase(), mockRoom2);
+        mockRoomMap.put(mockStartedRoom.getRoomName().toLowerCase(), mockStartedRoom);
     }
 
     @Test
@@ -309,5 +314,138 @@ public class RoomServiceTest {
         assertThrows(NoUserFoundException.class, () -> roomService.getOrCreateRoom(testRoomCreationDTO, session));
     }
 
-    //TODO: submit guess, create guess, randompatterngenerator
+    @Test
+    void testSubmitGuess_ValidAndCorrect() {
+        String roomName = mockStartedRoom.getRoomName();
+        PlayerGuessDTO playerGuessDTO = new PlayerGuessDTO("1234");
+        when(session.getAttribute("username")).thenReturn(mockStartedRoom.getHost().getUsername());
+        when(roomRepository.findByRoomName(roomName.toLowerCase())).thenReturn(Optional.of(mockStartedRoom));
+        
+        PlayerGuess returnedPlayerGuess = roomService.submitGuess(roomName, playerGuessDTO, session);
+
+        assertEquals("1234", playerGuessDTO.getPlayerGuess());
+        assertTrue(returnedPlayerGuess.isCorrectGuess());
+        assertEquals(9, returnedPlayerGuess.getRemainingGuesses());
+    }
+
+    @Test
+    void testSubmitGuess_ValidAndIncorrect() {
+        String roomName = mockStartedRoom.getRoomName();
+        PlayerGuessDTO playerGuessDTO = new PlayerGuessDTO("2345");
+        when(session.getAttribute("username")).thenReturn(mockStartedRoom.getHost().getUsername());
+        when(roomRepository.findByRoomName(roomName.toLowerCase())).thenReturn(Optional.of(mockStartedRoom));
+        
+        PlayerGuess returnedPlayerGuess = roomService.submitGuess(roomName, playerGuessDTO, session);
+
+        assertEquals("2345", playerGuessDTO.getPlayerGuess());
+        assertFalse(returnedPlayerGuess.isCorrectGuess());
+        assertEquals(9, returnedPlayerGuess.getRemainingGuesses());
+    }
+
+    @Test
+    void testSubmitGuess_InvalidGuessDigitsOutOfBounds() {
+        String roomName = mockStartedRoom.getRoomName();
+        PlayerGuessDTO playerGuessDTO = new PlayerGuessDTO("9999");
+        when(session.getAttribute("username")).thenReturn(mockStartedRoom.getHost().getUsername());
+        when(roomRepository.findByRoomName(roomName.toLowerCase())).thenReturn(Optional.of(mockStartedRoom));
+        
+        assertThrows(InvalidInputException.class, () -> roomService.submitGuess(roomName, playerGuessDTO, session));
+    }
+
+    @Test
+    void testSubmitGuess_InvalidGuessTooLong() {
+        String roomName = mockStartedRoom.getRoomName();
+        PlayerGuessDTO playerGuessDTO = new PlayerGuessDTO("123123123");
+        when(session.getAttribute("username")).thenReturn(mockStartedRoom.getHost().getUsername());
+        when(roomRepository.findByRoomName(roomName.toLowerCase())).thenReturn(Optional.of(mockStartedRoom));
+        
+        assertThrows(InvalidInputException.class, () -> roomService.submitGuess(roomName, playerGuessDTO, session));
+    }
+
+    @Test
+    void testSubmitGuess_InvalidGuessLettersNotNumbers() {
+        String roomName = mockStartedRoom.getRoomName();
+        PlayerGuessDTO playerGuessDTO = new PlayerGuessDTO("asdf");
+        when(session.getAttribute("username")).thenReturn(mockStartedRoom.getHost().getUsername());
+        when(roomRepository.findByRoomName(roomName.toLowerCase())).thenReturn(Optional.of(mockStartedRoom));
+        
+        assertThrows(InvalidInputException.class, () -> roomService.submitGuess(roomName, playerGuessDTO, session));
+    }
+
+    @Test
+    void testSubmitGuess_InvalidGuessEmpty() {
+        String roomName = mockStartedRoom.getRoomName();
+        PlayerGuessDTO playerGuessDTO = new PlayerGuessDTO("");
+        when(session.getAttribute("username")).thenReturn(mockStartedRoom.getHost().getUsername());
+        when(roomRepository.findByRoomName(roomName.toLowerCase())).thenReturn(Optional.of(mockStartedRoom));
+        
+        assertThrows(InvalidInputException.class, () -> roomService.submitGuess(roomName, playerGuessDTO, session));
+    }
+
+    @Test
+    void testSubmitGuess_RoomCompleted() {
+        String roomName = mockStartedRoom.getRoomName();
+        PlayerGuessDTO playerGuessDTO = new PlayerGuessDTO("1234");
+        mockStartedRoom.setCompleted(true);
+        when(session.getAttribute("username")).thenReturn(mockStartedRoom.getHost().getUsername());
+        when(roomRepository.findByRoomName(roomName.toLowerCase())).thenReturn(Optional.of(mockStartedRoom));
+        
+        assertThrows(GameNotStartedException.class, () -> roomService.submitGuess(roomName, playerGuessDTO, session));
+    }
+
+    @Test
+    void testSubmitGuess_RoomNotStarted() {
+        String roomName = mockStartedRoom.getRoomName();
+        PlayerGuessDTO playerGuessDTO = new PlayerGuessDTO("1234");
+        mockStartedRoom.setStarted(false);
+        when(session.getAttribute("username")).thenReturn(mockStartedRoom.getHost().getUsername());
+        when(roomRepository.findByRoomName(roomName.toLowerCase())).thenReturn(Optional.of(mockStartedRoom));
+        
+        assertThrows(GameNotStartedException.class, () -> roomService.submitGuess(roomName, playerGuessDTO, session));
+    }
+
+    @Test
+    void testSubmitGuess_PlayerNotHost() {
+        String roomName = mockStartedRoom.getRoomName();
+        PlayerGuessDTO playerGuessDTO = new PlayerGuessDTO("1234");
+        when(session.getAttribute("username")).thenReturn("Todd");
+        when(roomRepository.findByRoomName(roomName.toLowerCase())).thenReturn(Optional.of(mockStartedRoom));
+        
+        assertThrows(InsufficientPermissionsException.class, () -> roomService.submitGuess(roomName, playerGuessDTO, session));
+    }
+
+    @Test
+    void testCreateGuess_FirstGuessCorrect() {
+        List<Integer> playerGuessArray = List.of(1, 2, 3, 4);
+        String playerGuessString = "1234";
+        String mastercode = "1234";
+        int remainingGuesses = 9;
+
+        PlayerGuess createdGuess = roomService.createGuess(playerGuessArray, playerGuessString, mastercode, remainingGuesses);
+
+        assertTrue(createdGuess.isCorrectGuess());
+        assertEquals(9, createdGuess.getRemainingGuesses());
+    }
+
+    @Test
+    void testCreateGuess_FirstGuessIncorrect() {
+        List<Integer> playerGuessArray = List.of(2,3,4,5);
+        String playerGuessString = "2345";
+        String mastercode = "1234";
+        int remainingGuesses = 9;
+
+        PlayerGuess createdGuess = roomService.createGuess(playerGuessArray, playerGuessString, mastercode, remainingGuesses);
+
+        assertFalse(createdGuess.isCorrectGuess());
+        assertEquals(9, createdGuess.getRemainingGuesses());
+    }
+
+    @Test
+    void testRandomPatternGenerator() throws URISyntaxException {
+        int difficulty = 4;
+        String mastercode = roomService.randomPatternGenerator(difficulty);
+
+        assertEquals(difficulty, mastercode.length());
+    }
+
 }

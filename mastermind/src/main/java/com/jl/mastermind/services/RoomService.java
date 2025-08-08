@@ -219,7 +219,7 @@ public class RoomService {
     }
 
 
-private PlayerGuess createGuess(List<Integer> playerGuessArray, String playerGuessString, String masterCode, int remainingGuesses) { 
+public PlayerGuess createGuess(List<Integer> playerGuessArray, String playerGuessString, String masterCode, int remainingGuesses) { 
     String feedback;
     int matchingNumbers = 0;
     int exactMatch= 0;

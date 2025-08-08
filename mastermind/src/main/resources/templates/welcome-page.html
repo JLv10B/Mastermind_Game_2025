@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mastermind Game - Welcome</title>
     <style>
-        /* All CSS from the original file is included for consistent styling */
         * {
             margin: 0;
             padding: 0;
@@ -61,20 +60,6 @@
             font-weight: 300;
         }
 
-        h2 {
-            text-align: center;
-            color: #667eea;
-            margin-bottom: 25px;
-            font-size: 1.8em;
-        }
-
-        h3 {
-            color: #4a5568;
-            margin-bottom: 15px;
-            font-size: 1.2em;
-            text-align: center;
-        }
-
         .form-group {
             margin-bottom: 20px;
         }
@@ -86,7 +71,7 @@
             color: #4a5568;
         }
 
-        input, select {
+        input {
             width: 100%;
             padding: 15px;
             border: 2px solid #e2e8f0;
@@ -95,7 +80,7 @@
             transition: border-color 0.3s ease;
         }
 
-        input:focus, select:focus {
+        input:focus {
             outline: none;
             border-color: #667eea;
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
@@ -144,16 +129,6 @@
         </div>
     </div>
     <script>
-        // Game state and API URL from the original file
-        let gameState = {
-            username: '',
-            roomName: '',
-            difficulty: 4,
-            maxGuesses: 10,
-            remainingGuesses: 10,
-            gameStarted: false,
-            gameCompleted: false
-        };
         const API_BASE_URL = 'http://localhost:8080';
 
         // Utility functions
@@ -165,11 +140,63 @@
             document.querySelectorAll('.error').forEach(el => el.textContent = '');
         }
 
+        // Initialize or load existing game state
+        function initializeGameState() {
+            let gameState = {
+                username: '',
+                roomName: '',
+                difficulty: 4,
+                maxGuesses: 10,
+                remainingGuesses: 10,
+                gameStarted: false,
+                gameCompleted: false
+            };
+
+            // Try to load existing state from sessionStorage
+            const savedState = sessionStorage.getItem('gameState');
+            if (savedState) {
+                try {
+                    const parsedState = JSON.parse(savedState);
+                    gameState = { ...gameState, ...parsedState };
+                } catch (error) {
+                    console.error('Error parsing saved game state:', error);
+                }
+            }
+
+            return gameState;
+        }
+
+        // Save game state to sessionStorage
+        function saveGameState(gameState) {
+            try {
+                sessionStorage.setItem('gameState', JSON.stringify(gameState));
+                console.log(gameState.username);
+            } catch (error) {
+                console.error('Error saving game state:', error);
+            }
+        }
+
         // Welcome page function
         async function proceedToRoomCreation() {
             clearAllErrors();
             const username = document.getElementById('username').value.trim();
             
+            // Validate username
+            if (!username) {
+                showError('username-error', 'Please enter a username');
+                return;
+            }
+
+            if (username.length < 3) {
+                showError('username-error', 'Username must be at least 3 characters long');
+                return;
+            }
+
+            if (username.length > 20) {
+                showError('username-error', 'Username must be 20 characters or less');
+                return;
+            }
+
             try {
                 const response = await fetch(`${API_BASE_URL}/players/create-player`, {
                     method: 'POST',
@@ -184,10 +211,18 @@
                 
                 if (response.ok) {
                     const player = await response.json();
+                    
+                    // Initialize or load game state
+                    let gameState = initializeGameState();
+                    
+                    // Update with the new username
                     gameState.username = player.username;
                     
-                    sessionStorage.setItem('gameState', JSON.stringify(gameState));
-                    window.location.href = '/room-creation';
+                    saveGameState(gameState);
+                    // Save the updated state
+                    
+                    // Navigate to room creation with username as query parameter (backup method)
+                    window.location.href = `/room-creation`;
                 } else {
                     let errorMessage = 'Failed to create player';
                     try {
@@ -208,6 +243,12 @@
 
         // Allow Enter key to submit username
         document.addEventListener('DOMContentLoaded', function() {
+            // Pre-fill username if it exists in sessionStorage
+            const gameState = initializeGameState();
+            if (gameState.username) {
+                document.getElementById('username').value = gameState.username;
+            }
+
             document.getElementById('username').addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') {
                     proceedToRoomCreation();

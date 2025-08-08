@@ -432,16 +432,32 @@
     </div>
 
     <script>
-        // Game state and API URL from the original file
-        let gameState = {
-            username: '', // Placeholder username for this standalone page
-            roomName: '', // Placeholder room name
-            difficulty: 4, // Placeholder difficulty
-            maxGuesses: 10,
-            remainingGuesses: 10,
-            gameStarted: false,
-            gameCompleted: false
-        };
+        function loadGameState() {
+            let gameState = {
+                username: '',
+                roomName: '',
+                difficulty: 4,
+                maxGuesses: 10,
+                remainingGuesses: 10,
+                gameStarted: false,
+                gameCompleted: false
+            };
+
+            // First, try to load from sessionStorage
+            const savedState = sessionStorage.getItem('gameState');
+            if (savedState) {
+                try {
+                    const parsedState = JSON.parse(savedState);
+                    gameState = { ...gameState, ...parsedState };
+                    console.log(gameState.username);
+                } catch (error) {
+                    console.error('Error parsing saved game state:', error);
+                }
+            }
+
+            return gameState;
+        }
+
         const API_BASE_URL = 'http://localhost:8080';
 
         // Utility functions
@@ -561,6 +577,7 @@
 
         // Game room functions
         function initializeGameRoom() {
+            gameState = loadGameState();
             document.getElementById('room-title').textContent = `Room: ${gameState.roomName}`;
             document.getElementById('player-name').textContent = gameState.username;
             document.getElementById('game-difficulty').textContent = gameState.difficulty;
@@ -736,13 +753,13 @@
 
         // Allow Enter key to submit guess
         document.addEventListener('DOMContentLoaded', function() {
+            initializeGameRoom();
             document.getElementById('guess-input').addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') {
                     submitGuess();
                 }
             });
             // Initial load of scoreboards and game setup
-            initializeGameRoom();
             refreshScoreboards();
         });
     </script>

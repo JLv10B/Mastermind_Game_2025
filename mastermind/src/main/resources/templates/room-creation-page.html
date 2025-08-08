@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mastermind Game - Create Room</title>
     <style>
-        /* All CSS from the original file is included for consistent styling */
         * {
             margin: 0;
             padding: 0;
@@ -51,14 +50,6 @@
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
-        }
-
-        h1 {
-            text-align: center;
-            color: #4a5568;
-            margin-bottom: 30px;
-            font-size: 2.5em;
-            font-weight: 300;
         }
 
         h2 {
@@ -228,86 +219,30 @@
             color: #667eea;
         }
 
-        /* Game Room Styles */
-        .game-layout {
-            display: grid;
-            grid-template-columns: 1fr 200px;
-            gap: 30px;
-            align-items: start;
+        .error {
+            color: #e53e3e;
+            font-size: 14px;
+            margin-top: 5px;
         }
 
-        .game-main {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            width: 100%;
-        }
-
-        .game-sidebar {
-            background: #f7fafc;
-            padding: 20px;
-            border-radius: 10px;
+        .empty-scores {
             text-align: center;
-        }
-
-        .guess-counter {
-            font-size: 2em;
-            font-weight: bold;
-            color: #667eea;
-            margin-bottom: 10px;
-        }
-
-        .feedback-box {
-            background: #f7fafc;
-            border: 2px solid #e2e8f0;
-            border-radius: 10px;
+            color: #718096;
+            font-style: italic;
             padding: 20px;
-            min-height: 150px;
-            max-height: 300px;
-            overflow-y: auto;
-            font-family: monospace;
-            font-size: 14px;
-            line-height: 1.5;
         }
 
-        .feedback-entry {
-            margin-bottom: 15px;
+        .welcome-info {
+            background: #e6fffa;
+            border: 1px solid #81e6d9;
+            border-radius: 8px;
             padding: 10px;
-            background: white;
-            border-radius: 5px;
-            border-left: 4px solid #667eea;
-        }
-
-        .guess-input {
-            display: flex;
-            gap: 10px;
-        }
-
-        .guess-input input {
-            flex: 1;
-        }
-
-        .guess-input button {
-            width: auto;
-            padding: 15px 30px;
-        }
-
-        .controls {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
-        }
-
-        .controls button {
-            width: auto;
-            padding: 10px 20px;
-            font-size: 14px;
+            margin-bottom: 20px;
+            text-align: center;
+            color: #234e52;
         }
 
         @media (max-width: 1024px) {
-            .game-layout {
-                grid-template-columns: 1fr;
-            }
             .scoreboards-container {
                 flex-direction: column;
                 gap: 15px;
@@ -320,30 +255,6 @@
                 min-width: auto;
             }
         }
-
-        .error {
-            color: #e53e3e;
-            font-size: 14px;
-            margin-top: 5px;
-        }
-
-        .success {
-            color: #38a169;
-            font-size: 14px;
-            margin-top: 5px;
-        }
-
-        .disabled {
-            opacity: 0.6;
-            pointer-events: none;
-        }
-
-        .empty-scores {
-            text-align: center;
-            color: #718096;
-            font-style: italic;
-            padding: 20px;
-        }
     </style>
 </head>
 <body>
@@ -351,6 +262,12 @@
         <!-- Room Creation Page -->
         <div id="room-creation-page" class="page active">
             <div class="main-content">
+                <button class="back-button" onclick="backToWelcome()">← Back to Welcome</button>
+                
+                <div id="welcome-info" class="welcome-info">
+                    Welcome, <strong id="current-username">Player</strong>!
+                </div>
+                
                 <h2>Create Game Room</h2>
                 <div class="form-group">
                     <label for="room-name">Room Name:</label>
@@ -410,17 +327,10 @@
     </div>
 
     <script>
-        // Game state and API URL from the original file
-        let gameState = {
-            username: 'GuestUser', // Placeholder username. In a real app, this would be passed from the welcome page.
-            roomName: '',
-            difficulty: 4,
-            maxGuesses: 10,
-            remainingGuesses: 10,
-            gameStarted: false,
-            gameCompleted: false
-        };
+        const API_BASE_URL = 'http://localhost:8080';
+        let gameState = {};
 
+        // Utility functions
         function getUrlParams() {
             const params = {};
             const queryString = window.location.search;
@@ -430,9 +340,43 @@
             }
             return params;
         }
-        const API_BASE_URL = 'http://localhost:8080';
 
-        // Utility functions
+        // Load game state from multiple sources
+        function loadGameState() {
+            let gameState = {
+                username: '',
+                roomName: '',
+                difficulty: 4,
+                maxGuesses: 10,
+                remainingGuesses: 10,
+                gameStarted: false,
+                gameCompleted: false
+            };
+
+            // First, try to load from sessionStorage
+            const savedState = sessionStorage.getItem('gameState');
+            if (savedState) {
+                try {
+                    const parsedState = JSON.parse(savedState);
+                    gameState = { ...gameState, ...parsedState };
+                    console.log(gameState.username);
+                } catch (error) {
+                    console.error('Error parsing saved game state:', error);
+                }
+            }
+
+            return gameState;
+        }
+
+        // Save game state to sessionStorage
+        function saveGameState(gameState) {
+            try {
+                sessionStorage.setItem('gameState', JSON.stringify(gameState));
+            } catch (error) {
+                console.error('Error saving game state:', error);
+            }
+        }
+
         function showError(elementId, message) {
             const errorElement = document.getElementById(elementId);
             if (errorElement) {
@@ -442,6 +386,10 @@
 
         function clearAllErrors() {
             document.querySelectorAll('.error').forEach(el => el.textContent = '');
+        }
+
+        function backToWelcome() {
+            window.location.href = '/';
         }
 
         // Scoreboard functions
@@ -479,8 +427,6 @@
         }
 
         async function loadPlayerScores() {
-            const params = getUrlParams();
-            gameState.username = params.user;
             if (!gameState.username) {
                 console.log('No username to fetch player scores.');
                 updatePlayerScoresList([]);
@@ -528,12 +474,20 @@
             
             if (scores && scores.length > 0) {
                 scores.forEach((score, index) => {
+                    let level;
+                    if (score.difficulty == 4) {
+                        level = 'Easy';
+                    } else if (score.difficulty == 5) {
+                        level = 'Medium';
+                    } else {
+                        level = 'Hard';
+                    }
                     const scoreItem = document.createElement('div');
                     scoreItem.className = 'score-item your-score';
                     scoreItem.innerHTML = `
                         <span class="score-rank">#${index + 1}</span>
-                        <span class="score-name">${score.description || 'Game ' + (index + 1)}</span>
-                        <span class="score-value">${score.score}<span class="score-difficulty">(${score.difficulty}D)</span></span>
+                        <span class="score-difficulty">(${level})</span></span>
+                        <span class="score-value">${score.score}
                     `;
                     scoresList.appendChild(scoreItem);
                 });
@@ -564,11 +518,15 @@
                 
                 if (response.ok) {
                     const roomData = await response.json();
+                    
+                    // Update game state with room information
                     gameState.roomName = roomData.room_name;
                     gameState.difficulty = roomData.difficulty;
                     
-                    sessionStorage.setItem('gameState', JSON.stringify(gameState));
-                    window.location.href = '/game-room';
+                    // Save updated state
+                    saveGameState(gameState);
+                    
+                    window.location.href = `/game-room`;
                 } else {
                     let errorMessage = 'Failed to create room';
                     try {
@@ -589,12 +547,20 @@
 
         // Allow Enter key to create a room
         document.addEventListener('DOMContentLoaded', function() {
+            // Load game state
+            gameState = loadGameState();
+
+            // Display the username
+            document.getElementById('current-username').textContent = gameState.username;
+
+            // Add event listeners
             document.getElementById('room-name').addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') {
                     createRoom();
                 }
             });
-            // Initial load of scoreboards
+
+            // Load scoreboards
             refreshScoreboards();
         });
     </script>

@@ -561,12 +561,19 @@
             
             if (scores && scores.length > 0) {
                 scores.forEach((score, index) => {
+                    let level;
+                    if (score.difficulty == 4) {
+                        level = 'Easy';
+                    } else if (score.difficulty == 5) {
+                        level = 'Medium';
+                    } else {
+                        level = 'Hard';
+                    }
                     const scoreItem = document.createElement('div');
                     scoreItem.className = 'score-item your-score';
                     scoreItem.innerHTML = `
-                        <span class="score-rank">#${index + 1}</span>
-                        <span class="score-name">${score.description || 'Game ' + (index + 1)}</span>
-                        <span class="score-value">${score.score}<span class="score-difficulty">(${score.difficulty}D)</span></span>
+                        <span class="score-difficulty">(${level})</span></span>
+                        <span class="score-value">${score.score}
                     `;
                     scoresList.appendChild(scoreItem);
                 });

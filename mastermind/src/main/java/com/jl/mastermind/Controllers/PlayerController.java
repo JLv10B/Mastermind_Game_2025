@@ -52,7 +52,7 @@ public class PlayerController {
         }
     }
 
-
+    
     @PostMapping("/create-player")
     public ResponseEntity<Player> getOrCreatePlayer(@Valid @RequestBody Player newPlayer, HttpSession session) {
         Player createdPlayer = playerService.getOrCreatePlayer(newPlayer, session);

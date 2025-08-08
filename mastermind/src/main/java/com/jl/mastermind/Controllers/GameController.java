@@ -10,15 +10,5 @@ public class GameController {
     public String home() {
         return "index";
     }
-
-    @RequestMapping("/create-game")
-    public String createGame() {
-        return "create_game.html";
-    }
-
-    @RequestMapping("/game-page")
-    public String gamePage() {
-        return "game_page.html";
-    }
     
 }

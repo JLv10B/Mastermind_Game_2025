@@ -14,9 +14,11 @@ import jakarta.servlet.http.HttpSession;
 @Service
 public class PlayerService {
     private final PlayerRepository playerRepository;
+    private final PlayerScoreService playerScoreService;
 
-    public PlayerService(PlayerRepository playerRepository) {
+    public PlayerService(PlayerRepository playerRepository, PlayerScoreService playerScoreService) {
         this.playerRepository = playerRepository;
+        this.playerScoreService = playerScoreService;
     }
 
     public Map<String, Player> getAllPlayers() {
@@ -43,28 +45,15 @@ public class PlayerService {
         }
     }
 
-
-    // public Player createPlayer(Player newPlayer, HttpSession session) {
-    //     if (session.getAttribute("username") != null) {
-    //         throw new InsufficientPermissionsException("You are alreayd logged in.");
-    //     }
-    //     Optional<Player> playerOptional = playerRepository.getPlayerByName(newPlayer.getUsername().toLowerCase());
-    //     if (playerOptional.isPresent()){
-    //         throw new NameAlreadyExistsException(newPlayer.getUsername() + " already exists");
-    //     } else {
-    //         Player createdPlayer = playerRepository.createPlayer(newPlayer);
-    //         session.setAttribute("username", createdPlayer.getUsername());
-    //         return createdPlayer;
-    //     }
-    // }
-
     public Player getOrCreatePlayer(Player newPlayer, HttpSession session) {
         Optional<Player> playerOptional = playerRepository.getPlayerByName(newPlayer.getUsername().toLowerCase());
         if (playerOptional.isPresent()){
             Player foundPlayer = playerOptional.get();
+            session.setAttribute("username", foundPlayer.getUsername());
             return foundPlayer;
         } else {
             Player createdPlayer = playerRepository.createPlayer(newPlayer);
+            playerScoreService.createInitialPlayerScores(newPlayer);
             session.setAttribute("username", createdPlayer.getUsername());
             return createdPlayer;
         }        

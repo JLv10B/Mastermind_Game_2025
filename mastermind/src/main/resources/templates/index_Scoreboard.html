@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">1
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mastermind Game</title>
     <style>
         * {
@@ -19,6 +19,7 @@
             justify-content: center;
             align-items: center;
             color: #333;
+            padding: 20px;
         }
 
         .container {
@@ -27,8 +28,8 @@
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
             padding: 40px;
             min-width: 400px;
-            max-width: 800px;
-            width: 90%;
+            max-width: 1200px;
+            width: 95%;
             transition: all 0.3s ease;
         }
 
@@ -59,6 +60,13 @@
             color: #667eea;
             margin-bottom: 25px;
             font-size: 1.8em;
+        }
+
+        h3 {
+            color: #4a5568;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            text-align: center;
         }
 
         .form-group {
@@ -109,6 +117,21 @@
             transform: translateY(0);
         }
 
+        .back-button {
+            width: auto;
+            padding: 10px 20px;
+            font-size: 14px;
+            background: linear-gradient(45deg, #e2e8f0, #cbd5e0);
+            color: #4a5568;
+            margin-bottom: 20px;
+        }
+
+        .back-button:hover {
+            background: linear-gradient(45deg, #cbd5e0, #a0aec0);
+            transform: translateY(-1px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
         .radio-group {
             display: flex;
             gap: 20px;
@@ -125,6 +148,98 @@
         .radio-option input[type="radio"] {
             width: auto;
             margin: 0;
+        }
+
+        /* Layout for pages with scoreboards */
+        .page-with-scoreboards {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 30px;
+            align-items: start;
+        }
+
+        .main-content {
+            width: 100%;
+        }
+
+        .scoreboards-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .scoreboard {
+            background: #f7fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .scoreboard h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+            text-align: center;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 10px;
+        }
+
+        .score-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .score-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: white;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            font-size: 14px;
+            transition: transform 0.2s ease;
+        }
+
+        .score-item:hover {
+            transform: translateX(2px);
+        }
+
+        .score-rank {
+            font-weight: bold;
+            color: #667eea;
+            min-width: 25px;
+        }
+
+        .score-name {
+            flex: 1;
+            margin: 0 10px;
+            font-weight: 600;
+            color: #4a5568;
+        }
+
+        .score-value {
+            font-weight: bold;
+            color: #38a169;
+        }
+
+        .score-difficulty {
+            font-size: 12px;
+            color: #718096;
+            margin-left: 8px;
+        }
+
+        .your-score {
+            background: linear-gradient(45deg, #667eea10, #764ba210);
+            border-left-color: #764ba2;
+        }
+
+        .your-score .score-name {
+            color: #667eea;
         }
 
         /* Game Room Styles */
@@ -202,9 +317,28 @@
             font-size: 14px;
         }
 
+        @media (max-width: 1024px) {
+            .page-with-scoreboards {
+                grid-template-columns: 1fr;
+            }
+            
+            .scoreboards-container {
+                flex-direction: row;
+                gap: 15px;
+            }
+            
+            .scoreboard {
+                flex: 1;
+            }
+        }
+
         @media (max-width: 768px) {
             .game-layout {
                 grid-template-columns: 1fr;
+            }
+            
+            .scoreboards-container {
+                flex-direction: column;
             }
             
             .container {
@@ -229,6 +363,13 @@
             opacity: 0.6;
             pointer-events: none;
         }
+
+        .empty-scores {
+            text-align: center;
+            color: #718096;
+            font-style: italic;
+            padding: 20px;
+        }
     </style>
 </head>
 <body>
@@ -246,65 +387,190 @@
 
         <!-- Room Creation Page -->
         <div id="room-creation-page" class="page">
-            <h2>Create Game Room</h2>
-            <div class="form-group">
-                <label for="room-name">Room Name:</label>
-                <input type="text" id="room-name" placeholder="Enter room name">
-                <div id="room-name-error" class="error"></div>
+            <div class="page-with-scoreboards">
+                <div class="main-content">
+                    <h2>Create Game Room</h2>
+                    <div class="form-group">
+                        <label for="room-name">Room Name:</label>
+                        <input type="text" id="room-name" placeholder="Enter room name">
+                        <div id="room-name-error" class="error"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="difficulty">Difficulty:</label>
+                        <select id="difficulty">
+                            <option value="4">Easy (4 Digits)</option>
+                            <option value="5">Medium (5 Digits)</option>
+                            <option value="6">Hard (6 Digits)</option>
+                        </select>
+                    </div>
+                
+                    <button onclick="createRoom()">Create Room</button>
+                    <div id="room-creation-error" class="error"></div>
+                </div>
+
+                <div class="scoreboards-container">
+                    <!-- Top Scores Scoreboard -->
+                    <div class="scoreboard">
+                        <h3>🏆 Top Scores</h3>
+                        <div class="score-list" id="top-scores-list">
+                            <!-- Filler data - replace with your API calls -->
+                            <div class="score-item">
+                                <span class="score-rank">#1</span>
+                                <span class="score-name">CodeMaster</span>
+                                <span class="score-value">3<span class="score-difficulty">(6D)</span></span>
+                            </div>
+                            <div class="score-item">
+                                <span class="score-rank">#2</span>
+                                <span class="score-name">GuessWiz</span>
+                                <span class="score-value">4<span class="score-difficulty">(5D)</span></span>
+                            </div>
+                            <div class="score-item">
+                                <span class="score-rank">#3</span>
+                                <span class="score-name">LogicKing</span>
+                                <span class="score-value">5<span class="score-difficulty">(6D)</span></span>
+                            </div>
+                            <div class="score-item">
+                                <span class="score-rank">#4</span>
+                                <span class="score-name">MindReader</span>
+                                <span class="score-value">6<span class="score-difficulty">(4D)</span></span>
+                            </div>
+                            <div class="score-item">
+                                <span class="score-rank">#5</span>
+                                <span class="score-name">NumberNinja</span>
+                                <span class="score-value">7<span class="score-difficulty">(5D)</span></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Player's Scores Scoreboard -->
+                    <div class="scoreboard">
+                        <h3>📊 Your Scores</h3>
+                        <div class="score-list" id="player-scores-list">
+                            <!-- Filler data - replace with your API calls -->
+                            <div class="score-item your-score">
+                                <span class="score-rank">#1</span>
+                                <span class="score-name">Best: Easy</span>
+                                <span class="score-value">4<span class="score-difficulty">(4D)</span></span>
+                            </div>
+                            <div class="score-item your-score">
+                                <span class="score-rank">#2</span>
+                                <span class="score-name">Best: Medium</span>
+                                <span class="score-value">7<span class="score-difficulty">(5D)</span></span>
+                            </div>
+                            <div class="score-item your-score">
+                                <span class="score-rank">#3</span>
+                                <span class="score-name">Recent Game</span>
+                                <span class="score-value">9<span class="score-difficulty">(4D)</span></span>
+                            </div>
+                            <!-- Uncomment this if no scores are available -->
+                            <!-- <div class="empty-scores">No games played yet!</div> -->
+                        </div>
+                    </div>
+                </div>
             </div>
-            
-            <div class="form-group">
-                <label for="difficulty">Difficulty:</label>
-                <select id="difficulty">
-                    <option value="4">Easy (4 Digits)</option>
-                    <option value="5">Medium (5 Digits)</option>
-                    <option value="6">Hard (6 Digits)</option>
-                </select>
-            </div>
-        
-            
-            <button onclick="createRoom()">Create Room</button>
-            <div id="room-creation-error" class="error"></div>
         </div>
 
         <!-- Game Room Page -->
         <div id="game-room-page" class="page">
-            <h2 id="room-title">Game Room</h2>
-            <div class="game-layout">
-                <div class="game-main">
-                    <div class="form-group">
-                        <label for="guess-input">Enter your guess:</label>
-                        <div class="guess-input">
-                            <input type="text" id="guess-input" placeholder="Enter your guess">
-                            <button onclick="submitGuess()">Submit Guess</button>
+            <div class="page-with-scoreboards">
+                <div class="main-content">
+                    <button class="back-button" onclick="backToRoomCreation()">← Back to Room Creation</button>
+                    <h2 id="room-title">Game Room</h2>
+                    <div class="game-layout">
+                        <div class="game-main">
+                            <div class="form-group">
+                                <label for="guess-input">Enter your guess:</label>
+                                <div class="guess-input">
+                                    <input type="text" id="guess-input" placeholder="Enter your guess">
+                                    <button onclick="submitGuess()">Submit Guess</button>
+                                </div>
+                                <div id="guess-error" class="error"></div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Feedback:</label>
+                                <div id="feedback-box" class="feedback-box">
+                                    <div class="feedback-entry">Welcome to the game! Click "Start Game" to begin, then enter your first guess above.</div>
+                                </div>
+                            </div>
+
+                            <div class="controls">
+                                <button id="start-game-btn" onclick="startGame()">Start Game</button>
+                                <button id="reset-game-btn" onclick="resetGame()" class="disabled">Reset Game</button>
+                            </div>
                         </div>
-                        <div id="guess-error" class="error"></div>
+                        
+                        <div class="game-sidebar">
+                            <h3>Remaining Guesses</h3>
+                            <div id="guess-counter" class="guess-counter">10</div>
+                            <div>
+                                <strong>Player:</strong> <span id="player-name">Player</span>
+                            </div>
+                            <div style="margin-top: 15px;">
+                                <strong>Difficulty:</strong> <span id="game-difficulty">4</span> digits
+                            </div>
+                            <div style="margin-top: 15px;">
+                                <strong>Status:</strong> <span id="game-status">Not Started</span>
+                            </div>
+                        </div>
                     </div>
-                    
-                    <div class="form-group">
-                        <label>Feedback:</label>
-                        <div id="feedback-box" class="feedback-box">
-                            <div class="feedback-entry">Welcome to the game! Click "Start Game" to begin, then enter your first guess above.</div>
+                </div>
+
+                <div class="scoreboards-container">
+                    <!-- Top Scores Scoreboard (same as room creation) -->
+                    <div class="scoreboard">
+                        <h3>🏆 Top Scores</h3>
+                        <div class="score-list" id="game-top-scores-list">
+                            <!-- Filler data - replace with your API calls -->
+                            <div class="score-item">
+                                <span class="score-rank">#1</span>
+                                <span class="score-name">CodeMaster</span>
+                                <span class="score-value">3<span class="score-difficulty">(6D)</span></span>
+                            </div>
+                            <div class="score-item">
+                                <span class="score-rank">#2</span>
+                                <span class="score-name">GuessWiz</span>
+                                <span class="score-value">4<span class="score-difficulty">(5D)</span></span>
+                            </div>
+                            <div class="score-item">
+                                <span class="score-rank">#3</span>
+                                <span class="score-name">LogicKing</span>
+                                <span class="score-value">5<span class="score-difficulty">(6D)</span></span>
+                            </div>
+                            <div class="score-item">
+                                <span class="score-rank">#4</span>
+                                <span class="score-name">MindReader</span>
+                                <span class="score-value">6<span class="score-difficulty">(4D)</span></span>
+                            </div>
+                            <div class="score-item">
+                                <span class="score-rank">#5</span>
+                                <span class="score-name">NumberNinja</span>
+                                <span class="score-value">7<span class="score-difficulty">(5D)</span></span>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="controls">
-                        <button id="start-game-btn" onclick="startGame()">Start Game</button>
-                        <button id="reset-game-btn" onclick="resetGame()" class="disabled">Reset Game</button>
-                    </div>
-                </div>
-                
-                <div class="game-sidebar">
-                    <h3>Remaining Guesses</h3>
-                    <div id="guess-counter" class="guess-counter">10</div>
-                    <div>
-                        <strong>Player:</strong> <span id="player-name">Player</span>
-                    </div>
-                    <div style="margin-top: 15px;">
-                        <strong>Difficulty:</strong> <span id="game-difficulty">4</span> digits
-                    </div>
-                    <div style="margin-top: 15px;">
-                        <strong>Status:</strong> <span id="game-status">Not Started</span>
+                    <!-- Player's Scores Scoreboard (same as room creation) -->
+                    <div class="scoreboard">
+                        <h3>📊 Your Scores</h3>
+                        <div class="score-list" id="game-player-scores-list">
+                            <!-- Filler data - replace with your API calls -->
+                            <div class="score-item your-score">
+                                <span class="score-name">Easy</span>
+                                <span class="score-value">4<span class="score-difficulty">(4D)</span></span>
+                            </div>
+                            <div class="score-item your-score">
+                                <span class="score-name">Medium</span>
+                                <span class="score-value">7<span class="score-difficulty">(5D)</span></span>
+                            </div>
+                            <div class="score-item your-score">
+                                <span class="score-name">Hard</span>
+                                <span class="score-value">9<span class="score-difficulty">(4D)</span></span>
+                            </div>
+                            <!-- Uncomment this if no scores are available -->
+                            <!-- <div class="empty-scores">No games played yet!</div> -->
+                        </div>
                     </div>
                 </div>
             </div>
@@ -332,6 +598,11 @@
                 page.classList.remove('active');
             });
             document.getElementById(pageId).classList.add('active');
+            
+            // Refresh scoreboards when showing pages with scoreboards
+            if (pageId === 'room-creation-page' || pageId === 'game-room-page') {
+                refreshScoreboards();
+            }
         }
 
         function showError(elementId, message) {
@@ -344,6 +615,103 @@
 
         function clearAllErrors() {
             document.querySelectorAll('.error').forEach(el => el.textContent = '');
+        }
+
+        // Back button function
+        function backToRoomCreation() {
+            showPage('room-creation-page');
+        }
+
+        // Scoreboard functions - replace these with your API calls
+        function refreshScoreboards() {
+            loadTopScores();
+            loadPlayerScores();
+        }
+
+        function loadTopScores() {
+            // TODO: Replace this with your API call to fetch top scores
+            // Example API call structure:
+            /*
+            fetch(`${API_BASE_URL}/scores/top-scores`)
+                .then(response => response.json())
+                .then(scores => {
+                    updateTopScoresList(scores);
+                })
+                .catch(error => {
+                    console.error('Error loading top scores:', error);
+                });
+            */
+            
+            // For now, using filler data - you can remove this when implementing your API
+            console.log('TODO: Implement loadTopScores() with your API');
+        }
+
+        function loadPlayerScores() {
+            // TODO: Replace this with your API call to fetch player's scores
+            // Example API call structure:
+            /*
+            fetch(`${API_BASE_URL}/scores/player/${gameState.username}`)
+                .then(response => response.json())
+                .then(scores => {
+                    updatePlayerScoresList(scores);
+                })
+                .catch(error => {
+                    console.error('Error loading player scores:', error);
+                });
+            */
+            
+            // For now, using filler data - you can remove this when implementing your API
+            console.log('TODO: Implement loadPlayerScores() with your API');
+        }
+
+        function updateTopScoresList(scores) {
+            // Update both scoreboards (room creation and game room pages)
+            const topScoresLists = ['top-scores-list', 'game-top-scores-list'];
+            
+            topScoresLists.forEach(listId => {
+                const scoresList = document.getElementById(listId);
+                scoresList.innerHTML = '';
+                
+                if (scores && scores.length > 0) {
+                    scores.forEach((score, index) => {
+                        const scoreItem = document.createElement('div');
+                        scoreItem.className = 'score-item';
+                        scoreItem.innerHTML = `
+                            <span class="score-rank">#${index + 1}</span>
+                            <span class="score-name">${score.username}</span>
+                            <span class="score-value">${score.guesses}<span class="score-difficulty">(${score.difficulty}D)</span></span>
+                        `;
+                        scoresList.appendChild(scoreItem);
+                    });
+                } else {
+                    scoresList.innerHTML = '<div class="empty-scores">No scores available yet!</div>';
+                }
+            });
+        }
+
+        function updatePlayerScoresList(scores) {
+            // Update both scoreboards (room creation and game room pages)
+            const playerScoresLists = ['player-scores-list', 'game-player-scores-list'];
+            
+            playerScoresLists.forEach(listId => {
+                const scoresList = document.getElementById(listId);
+                scoresList.innerHTML = '';
+                
+                if (scores && scores.length > 0) {
+                    scores.forEach((score, index) => {
+                        const scoreItem = document.createElement('div');
+                        scoreItem.className = 'score-item your-score';
+                        scoreItem.innerHTML = `
+                            <span class="score-rank">#${index + 1}</span>
+                            <span class="score-name">${score.description || 'Game ' + (index + 1)}</span>
+                            <span class="score-value">${score.guesses}<span class="score-difficulty">(${score.difficulty}D)</span></span>
+                        `;
+                        scoresList.appendChild(scoreItem);
+                    });
+                } else {
+                    scoresList.innerHTML = '<div class="empty-scores">No games played yet!</div>';
+                }
+            });
         }
 
         // Welcome page functions
@@ -517,9 +885,11 @@
                     document.getElementById('guess-input').value = '';
                     clearError('guess-error');
                     
-
                     const feedbackBox = document.getElementById('feedback-box');
                     feedbackBox.innerHTML = '<div class="feedback-entry">Game reset! Click "Start Game" to begin a new round.</div>';
+                    
+                    // Refresh scoreboards after game reset
+                    refreshScoreboards();
                 } else {
                     const errorText = await response.text();
                     showError('guess-error', 'Failed to reset game: ' + errorText);
@@ -587,7 +957,8 @@
 
         function handleGuessResponse(guess, playerGuess) {
             // Update remaining guesses
-            document.getElementById('guess-counter').textContent = playerGuess.remainingGuesses;
+            gameState.remainingGuesses = playerGuess.remainingGuesses;
+            document.getElementById('guess-counter').textContent = gameState.remainingGuesses;
             gameState.gameCompleted = playerGuess.correctGuess;
             
             // Add feedback to the feedback box
@@ -595,7 +966,6 @@
             const feedbackEntry = document.createElement('div');
             feedbackEntry.className = 'feedback-entry';
             
-            const guessNumber = gameState.maxGuesses - gameState.remainingGuesses;
             feedbackEntry.innerHTML = `
                 <strong>Feedback:</strong> ${playerGuess.feedback}
             `;
@@ -605,9 +975,13 @@
             
             if (gameState.gameCompleted === true) {
                 document.getElementById('game-status').textContent = 'Won!';
+                // Refresh scoreboards when game is completed (new score might be added)
+                refreshScoreboards();
             } else if (gameState.remainingGuesses <= 0) {
                 gameState.gameCompleted = true;
                 document.getElementById('game-status').textContent = 'Lost';
+                // Refresh scoreboards when game is completed
+                refreshScoreboards();
             }
         }
 

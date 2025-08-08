@@ -7,16 +7,19 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 
 import com.jl.mastermind.entities.Player;
 import com.jl.mastermind.exceptions.*;
 import com.jl.mastermind.repositories.PlayerRepository;
+import com.jl.mastermind.services.PlayerScoreService;
 import com.jl.mastermind.services.PlayerService;
 
 import jakarta.servlet.http.HttpSession;
@@ -24,9 +27,13 @@ import jakarta.servlet.http.HttpSession;
 
 @SpringBootTest
 @ExtendWith(MockitoExtension.class)
+@ActiveProfiles("dev")
 public class PlayerServiceTest {
     @Mock
     private PlayerRepository playerRepository;
+
+    @Mock
+    private PlayerScoreService playerScoreService;
 
     @Mock
     private HttpSession session;
@@ -34,6 +41,11 @@ public class PlayerServiceTest {
     @InjectMocks
     private PlayerService playerService;
 
+    @BeforeEach
+    void setUp() {
+
+    }
+    
 
     @Test
     void testGetAllPlayers_Populated() {
@@ -82,29 +94,29 @@ public class PlayerServiceTest {
 
     @Test
     void testGetPlayerByName_PlayerDoesNotExist() {
-        String username = "testuser";
-        when(playerRepository.getPlayerByName(username)).thenReturn(Optional.empty());
+        String username = "TESTUSER";
+        when(playerRepository.getPlayerByName(username.toLowerCase())).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class, () -> playerService.getPlayerByName(username));
     }
     
     @Test
     void testDeletePlayer_PlayerExists() {
-        String username = "testuser";
+        String username = "TESTUSER";
         Player mockPlayer = new Player(username);
         when(playerRepository.getPlayerByName(username.toLowerCase())).thenReturn(Optional.of(mockPlayer));
-        when(playerRepository.deletePlayer(username)).thenReturn(true);
+        when(playerRepository.deletePlayer(username.toLowerCase())).thenReturn(true);
 
         boolean deleted = playerService.deletePlayer(username);
 
         assertTrue(deleted);
 
-        verify(playerRepository, times(1)).deletePlayer(username);
+        verify(playerRepository, times(1)).deletePlayer(username.toLowerCase());
     }
     
     @Test
     void testDeletePlayer_PlayerDoesNotExist() {
-        String username = "testuser";
+        String username = "TESTUSER";
         when(playerRepository.getPlayerByName(username.toLowerCase())).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class, () -> playerService.deletePlayer(username));
@@ -114,12 +126,11 @@ public class PlayerServiceTest {
     
 
     @Test
-    void testCreatePlayer_UsernameRepeated() {
+    void testGetOrCreatePlayer_PlayerExists() {
         String username = "TESTUSER";
         Player mockPlayer = new Player(username);
-        when(playerRepository.getPlayerByName(mockPlayer.getUsername().toLowerCase())).thenReturn(Optional.empty());
-        when(playerRepository.createPlayer(mockPlayer)).thenReturn(mockPlayer);
-    
+        when(playerRepository.getPlayerByName(mockPlayer.getUsername().toLowerCase())).thenReturn(Optional.of(mockPlayer));
+        
         Player testPlayer = playerService.getOrCreatePlayer(mockPlayer, session);
         
         assertNotNull(testPlayer);
@@ -132,7 +143,7 @@ public class PlayerServiceTest {
         Player mockPlayer = new Player(username);
         when(playerRepository.getPlayerByName(mockPlayer.getUsername().toLowerCase())).thenReturn(Optional.empty());
         when(playerRepository.createPlayer(mockPlayer)).thenReturn(mockPlayer);
-    
+        
         Player testPlayer = playerService.getOrCreatePlayer(mockPlayer, session);
         
         assertNotNull(testPlayer);

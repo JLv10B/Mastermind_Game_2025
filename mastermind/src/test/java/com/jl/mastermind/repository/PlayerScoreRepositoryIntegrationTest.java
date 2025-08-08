@@ -10,46 +10,47 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.test.context.ActiveProfiles;
 
 import com.jl.mastermind.entities.PlayerScore;
 import com.jl.mastermind.repositories.PlayerScoreRepository;
 
-@SpringBootTest
+@DataJpaTest
 @ExtendWith(MockitoExtension.class)
+@ActiveProfiles("dev")
 public class PlayerScoreRepositoryIntegrationTest {
 
-    private PlayerScoreRepository scoreLeaderboardRepository;
+    private PlayerScoreRepository playerScoreRepository;
  
-
     @Autowired
-    public PlayerScoreRepositoryIntegrationTest(PlayerScoreRepository scoreLeaderboardRepository) {
-        this.scoreLeaderboardRepository = scoreLeaderboardRepository;
+    public PlayerScoreRepositoryIntegrationTest(PlayerScoreRepository playerScoreRepository) {
+        this.playerScoreRepository = playerScoreRepository;
     }
 
 
     @Test
     void testFindPlayerScore() {
-        PlayerScore testScoreLeaderboard = new PlayerScore("testuser", 1, 4);
-        scoreLeaderboardRepository.save(testScoreLeaderboard);
-        Optional<PlayerScore> foundLeaderboard = scoreLeaderboardRepository.findById("testuser");
+        PlayerScore testScoreLeaderboard = PlayerScore.builder().username("testuser").score(1).difficulty(4).build();
+        playerScoreRepository.save(testScoreLeaderboard);
+        List<PlayerScore> foundLeaderboard = playerScoreRepository.findByUsername("testuser");
 
         assertNotNull(foundLeaderboard);
-        assertEquals(testScoreLeaderboard.getUsername(), foundLeaderboard.get().getUsername());
+        assertEquals(1, foundLeaderboard.size());
     }
 
     @Test
     void testScoreLeaderboardCreationGetAll() {
-        PlayerScore testScoreLeaderboard = new PlayerScore("testuser", 1, 4);
-        PlayerScore testScoreLeaderboard2 = new PlayerScore("testuser1", 2, 4);
-        PlayerScore testScoreLeaderboard3 = new PlayerScore("testuser2", 3, 4);
-        PlayerScore testScoreLeaderboard4 = new PlayerScore("testuser3", 4, 4);
-        scoreLeaderboardRepository.save(testScoreLeaderboard);
-        scoreLeaderboardRepository.save(testScoreLeaderboard2);
-        scoreLeaderboardRepository.save(testScoreLeaderboard3);
-        scoreLeaderboardRepository.save(testScoreLeaderboard4);
+        PlayerScore testScoreLeaderboard = PlayerScore.builder().username("testuser").score(1).difficulty(4).build();
+        PlayerScore testScoreLeaderboard2 = PlayerScore.builder().username("testuser1").score(2).difficulty(4).build();
+        PlayerScore testScoreLeaderboard3 = PlayerScore.builder().username("testuser2").score(3).difficulty(4).build();
+        PlayerScore testScoreLeaderboard4 = PlayerScore.builder().username("testuser3").score(4).difficulty(4).build();
+        playerScoreRepository.save(testScoreLeaderboard);
+        playerScoreRepository.save(testScoreLeaderboard2);
+        playerScoreRepository.save(testScoreLeaderboard3);
+        playerScoreRepository.save(testScoreLeaderboard4);
 
-        Iterable<PlayerScore> foundLeaderboard = scoreLeaderboardRepository.findAll();
+        Iterable<PlayerScore> foundLeaderboard = playerScoreRepository.findAll();
         List<PlayerScore> foundLeaderboardList = StreamSupport.stream(foundLeaderboard.spliterator(), false).toList();
 
         assertNotNull(foundLeaderboard);
@@ -60,28 +61,30 @@ public class PlayerScoreRepositoryIntegrationTest {
     @Test
     void testUpdate() {
         String username = "testuser";
-        PlayerScore testScoreLeaderboard = new PlayerScore(username, 1, 4);
-        scoreLeaderboardRepository.save(testScoreLeaderboard);
+        PlayerScore testScoreLeaderboard = PlayerScore.builder().username(username).score(1).difficulty(4).build();
+        playerScoreRepository.save(testScoreLeaderboard);
 
-        PlayerScore testInputScoreLeaderboard = new PlayerScore(username, 5, 4);
-        scoreLeaderboardRepository.save(testInputScoreLeaderboard);
+        Optional<PlayerScore> testInputScoreLeaderboard = playerScoreRepository.findByUsernameAndDifficulty(username, 4);
+        testScoreLeaderboard = testInputScoreLeaderboard.get();
+        testScoreLeaderboard.setScore(5);
+        playerScoreRepository.save(testScoreLeaderboard);
 
-        Optional<PlayerScore> foundLeaderboard = scoreLeaderboardRepository.findById(username);
+        Optional<PlayerScore> foundLeaderboard = playerScoreRepository.findByUsernameAndDifficulty(username, 4);
 
         assertEquals(5, foundLeaderboard.get().getScore());
     }
 
     @Test
     void testDelete() {
-        scoreLeaderboardRepository.deleteAll();
+        // playerScoreRepository.deleteAll();
         String username = "testuser";
-        PlayerScore testScoreLeaderboard = new PlayerScore(username, 1, 4);
-        PlayerScore testScoreLeaderboard2 = new PlayerScore("testuser1", 2, 4);
-        scoreLeaderboardRepository.save(testScoreLeaderboard);
-        scoreLeaderboardRepository.save(testScoreLeaderboard2);
-        scoreLeaderboardRepository.deleteById(username);
+        PlayerScore testScoreLeaderboard = PlayerScore.builder().username(username).score(1).difficulty(4).build();
+        PlayerScore testScoreLeaderboard2 = PlayerScore.builder().username("testuser2").score(2).difficulty(4).build();
+        playerScoreRepository.save(testScoreLeaderboard);
+        playerScoreRepository.save(testScoreLeaderboard2);
+        playerScoreRepository.deleteByUsername(username);
 
-        Iterable<PlayerScore> foundLeaderboard = scoreLeaderboardRepository.findAll();
+        Iterable<PlayerScore> foundLeaderboard = playerScoreRepository.findAll();
         List<PlayerScore> foundLeaderboardList = StreamSupport.stream(foundLeaderboard.spliterator(), false).toList();
 
         assertFalse(foundLeaderboardList.contains(testScoreLeaderboard));

@@ -1,6 +1,5 @@
 package com.jl.mastermind;
 
-import javax.sql.DataSource;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -12,10 +11,9 @@ import lombok.extern.java.Log;
 @Log
 public class MastermindApplication {
 
-	private final DataSource dataSource;
 
-	public MastermindApplication(final DataSource dataSource) {
-		this.dataSource = dataSource;
+	public MastermindApplication() {
+
 	}
 
 	public static void main(String[] args) {

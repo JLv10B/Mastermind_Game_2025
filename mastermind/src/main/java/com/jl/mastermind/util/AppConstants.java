@@ -8,5 +8,7 @@ public class AppConstants {
         public static final int MIN_DIFFICULTY = 4;
         public static final int MAX_DIFFICULTY = 6;
         public static final int MAX_GUESSES = 10;
+        public static final int LARGEST_DIGIT = 7;
+        public static final int SMALLEST_DIGIT = 0;
     }
 }

@@ -1,7 +1,6 @@
 package com.jl.mastermind.controllers;
 
 import java.util.List;
-import java.util.stream.StreamSupport;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;

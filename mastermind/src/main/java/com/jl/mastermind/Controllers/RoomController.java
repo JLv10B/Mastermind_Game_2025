@@ -75,7 +75,7 @@ public class RoomController {
 
     @PostMapping("/create-room")
     public ResponseEntity<Room> createRoom(@Valid @RequestBody RoomCreationDTO roomCreationDTO, HttpSession session) throws URISyntaxException {
-        Room newRoom = roomService.createRoom(roomCreationDTO, session);
+        Room newRoom = roomService.getOrCreateRoom(roomCreationDTO, session);
         return ResponseEntity.status(HttpStatus.CREATED).body(newRoom);
     }
 

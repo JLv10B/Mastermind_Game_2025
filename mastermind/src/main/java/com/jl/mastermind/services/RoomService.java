@@ -1,8 +1,10 @@
 package com.jl.mastermind.services;
 
+import static com.jl.mastermind.util.AppConstants.RoomParameters.LARGEST_DIGIT;
 import static com.jl.mastermind.util.AppConstants.RoomParameters.MAX_DIFFICULTY;
 import static com.jl.mastermind.util.AppConstants.RoomParameters.MAX_GUESSES;
 import static com.jl.mastermind.util.AppConstants.RoomParameters.MIN_DIFFICULTY;
+import static com.jl.mastermind.util.AppConstants.RoomParameters.SMALLEST_DIGIT;
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
@@ -17,7 +19,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -35,10 +36,12 @@ public class RoomService {
 
     private final PlayerService playerService;
     private final RoomRepository roomRepository;
+    private final PlayerScoreService playerScoreService;
 
-    public RoomService(RoomRepository roomRepository, PlayerService playerService) {
+    public RoomService(RoomRepository roomRepository, PlayerService playerService, PlayerScoreService playerScoreService) {
         this.roomRepository = roomRepository;
         this.playerService = playerService;
+        this.playerScoreService = playerScoreService;
     }
 
     public Map<String, Room> getRoomMap() {
@@ -117,19 +120,22 @@ public class RoomService {
     }
 
 
-    public Room createRoom(RoomCreationDTO roomCreationDTO, HttpSession session) throws URISyntaxException {
+    public Room getOrCreateRoom(RoomCreationDTO roomCreationDTO, HttpSession session) throws URISyntaxException {
         if (session.getAttribute("username") == null) {
             throw new NoUserFoundException("No username found, unable to create a room");
         }
         Optional<Room> roomOptional = roomRepository.findByRoomName(roomCreationDTO.getRoomName().toLowerCase());
         if (roomOptional.isPresent()) {
-            throw new NameAlreadyExistsException(roomCreationDTO.getRoomName() + " already exists");
+            Room foundRoom = roomOptional.get();
+            if (session.getAttribute("username").toString() != foundRoom.getHost().getUsername()) {
+                throw new InsufficientPermissionsException("You do not have permission to enter the room");
+            }
+            return foundRoom;
         } else {
             String roomName = roomCreationDTO.getRoomName();
             int difficulty = roomCreationDTO.getDifficulty();
             Player host = playerService.getPlayerByName(session.getAttribute("username").toString().toLowerCase());
             String masterCode = randomPatternGenerator(difficulty);
-            
             List<PlayerGuess> guessList = new ArrayList<>();
 
             Room newRoom = new Room(roomName, host, difficulty, false, false, masterCode, guessList);
@@ -160,33 +166,52 @@ public class RoomService {
 
 
     public PlayerGuess submitGuess(String roomName, PlayerGuessDTO playerGuessDTO, HttpSession session) {
-        String playerGuessString = playerGuessDTO.getPlayerGuess();
         Room room = getRoom(roomName);
+        if (session.getAttribute("username").toString() != room.getHost().getUsername()) {
+            throw new InsufficientPermissionsException("You aren't the host");
+        }
         if (!room.isStarted()) {
             throw new GameNotStartedException("Game has not started yet");
         }
         if (room.isCompleted()) {
-            return new PlayerGuess(playerGuessString, false, "Game completed, reset the game to play again", 0);
+            throw new GameNotStartedException("Game completed, reset the game to play again");
         }
+        
+        String playerGuessString = playerGuessDTO.getPlayerGuess();
+        
         if (playerGuessString.length() == 0) {
             throw new InvalidInputException("You must enter a guess");
         }
         if (!playerGuessString.matches("\\d+")) {
             throw new InvalidInputException("Please submit only numbers");
         }
-        if (playerGuessDTO == null || playerGuessString.length() != room.getDifficulty()) {
+        if (playerGuessString.length() != room.getDifficulty()) {
             throw new InvalidInputException("Please submit the correct number of digits");
         }
+        
+        List<Integer> playerGuessArray = new ArrayList<>();
+        for (char x : playerGuessString.toCharArray()) {
+            playerGuessArray.add(Character.getNumericValue(x));
+        }
+
+        for (int i=0; i<playerGuessArray.size(); i++) {
+            if (playerGuessArray.get(i) < SMALLEST_DIGIT || playerGuessArray.get(i) > LARGEST_DIGIT ) {
+                throw new InvalidInputException("Please enter digits between " + SMALLEST_DIGIT + " and " + LARGEST_DIGIT);
+            }
+        }
+        
         List<PlayerGuess> guessList = room.getGuessList();
         int currentGuessCount = MAX_GUESSES - guessList.size();
-        if(currentGuessCount <= 0) {
-            return new PlayerGuess(playerGuessString, false, "No guesses remaining, reset the game to play again", 0);
-        }
         int remainingGuesses = currentGuessCount - 1;
-        PlayerGuess playerGuess = createGuess(playerGuessString, room.getMastercode(), remainingGuesses);
+        PlayerGuess playerGuess = createGuess(playerGuessArray, playerGuessString, room.getMastercode(), remainingGuesses);
         guessList.add(playerGuess);
-
+        
         if (playerGuess.isCorrectGuess()) {
+            room.setCompleted(true);
+            playerScoreService.updatePlayerScore(room.getHost().getUsername(), room.getDifficulty());
+        }
+
+        if(remainingGuesses <= 0) {
             room.setCompleted(true);
         }
 
@@ -194,28 +219,30 @@ public class RoomService {
     }
 
 
-private PlayerGuess createGuess(String playerGuessString, String masterCode, int remainingGuesses) { 
+private PlayerGuess createGuess(List<Integer> playerGuessArray, String playerGuessString, String masterCode, int remainingGuesses) { 
     String feedback;
     int matchingNumbers = 0;
     int exactMatch= 0;
+    
+    List<Integer> MasterCodeArray = new ArrayList<>();
+    for (char y : masterCode.toCharArray()) {
+        MasterCodeArray.add(Character.getNumericValue(y));
+    }
 
-    List<Character> tempPlayerGuessList = playerGuessString.chars().mapToObj(c -> (char) c).collect(Collectors.toList());
-    List<Character> tempMasterCodeList = masterCode.chars().mapToObj(c -> (char) c).collect(Collectors.toList());
-
-    for (int i=0; i<playerGuessString.length(); i++) {
-        if (tempPlayerGuessList.get(i).equals(tempMasterCodeList.get(i))) {
+    for (int i=0; i<MasterCodeArray.size(); i++) {
+        if (playerGuessArray.get(i) == (MasterCodeArray.get(i))) {
             exactMatch++;
         }
     }
 
-    Map<Character, Integer> frequencyMap = new HashMap<>();
-    for (char c : tempMasterCodeList) {
-        frequencyMap.put(c, frequencyMap.getOrDefault(c, 0) + 1);
+    Map<Integer, Integer> frequencyMap = new HashMap<>();
+    for (int i : MasterCodeArray) {
+        frequencyMap.put(i, frequencyMap.getOrDefault(i, 0) + 1);
     }
-    for (char c : tempPlayerGuessList) {
-        if (frequencyMap.containsKey(c) && frequencyMap.get(c) > 0) {
+    for (int i : playerGuessArray) {
+        if (frequencyMap.containsKey(i) && frequencyMap.get(i) > 0) {
             matchingNumbers++;
-            frequencyMap.put(c, frequencyMap.get(c) - 1);
+            frequencyMap.put(i, frequencyMap.get(i) - 1);
         }
     }
 
@@ -231,6 +258,7 @@ private PlayerGuess createGuess(String playerGuessString, String masterCode, int
 
     String gamestateString;
     boolean correctGuess = false;
+
     if (exactMatch == masterCode.length()) {
         correctGuess = true;
         gamestateString = "Congratulations, you win!";

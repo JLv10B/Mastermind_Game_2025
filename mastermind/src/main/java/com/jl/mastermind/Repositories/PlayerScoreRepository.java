@@ -9,9 +9,10 @@ import org.springframework.stereotype.Repository;
 import com.jl.mastermind.entities.PlayerScore;
 
 @Repository
-public interface PlayerScoreRepository extends JpaRepository<PlayerScore, String> {
+public interface PlayerScoreRepository extends JpaRepository<PlayerScore, Integer> {
 
     List<PlayerScore> findByUsername(String username);
     Optional<PlayerScore> findByUsernameAndDifficulty(String username, int difficulty);
     List<PlayerScore> findTop10ByDifficultyOrderByScoreDesc(int difficulty);
+    void deleteByUsername(String username);
 }

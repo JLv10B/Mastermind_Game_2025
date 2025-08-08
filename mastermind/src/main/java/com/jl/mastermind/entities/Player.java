@@ -9,7 +9,7 @@ import lombok.Data;
 @Data
 public class Player implements Serializable {
     @NotNull
-    @Size(max=25)
+    @Size(min=3, max=25)
     private String username;
 
     public Player(String username) {

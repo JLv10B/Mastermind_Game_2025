@@ -17,6 +17,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 
 import com.jl.mastermind.dto.PlayerRoomViewDTO;
 import com.jl.mastermind.dto.RoomCreationDTO;
@@ -25,7 +26,6 @@ import com.jl.mastermind.entities.Player;
 import com.jl.mastermind.entities.PlayerGuess;
 import com.jl.mastermind.entities.Room;
 import com.jl.mastermind.exceptions.*;
-import com.jl.mastermind.exceptions.InsufficientPermissionsException;
 import com.jl.mastermind.repositories.RoomRepository;
 import com.jl.mastermind.services.PlayerService;
 import com.jl.mastermind.services.RoomService;
@@ -35,6 +35,7 @@ import jakarta.servlet.http.HttpSession;
 
 @SpringBootTest
 @ExtendWith(MockitoExtension.class)
+@ActiveProfiles("dev")
 public class RoomServiceTest {
 
     Map<String, Room> mockRoomMap;
@@ -269,7 +270,7 @@ public class RoomServiceTest {
         when(roomRepository.findByRoomName(testRoomCreationDTO.getRoomName().toLowerCase())).thenReturn(Optional.empty());
         when(playerService.getPlayerByName(testPlayer.getUsername().toLowerCase())).thenReturn(testPlayer);
         
-        Room createdTestRoom = roomService.createRoom(testRoomCreationDTO, session);
+        Room createdTestRoom = roomService.getOrCreateRoom(testRoomCreationDTO, session);
 
         assertNotNull(createdTestRoom);
         assertEquals(4, createdTestRoom.getDifficulty());
@@ -278,13 +279,26 @@ public class RoomServiceTest {
     }
 
     @Test
-    void testCreateRoom_RoomExists() throws URISyntaxException {
-        Player testPlayer = new Player("Todd");
+    void testCreateRoom_RoomExistsValidPerms() throws URISyntaxException {
         RoomCreationDTO testRoomCreationDTO = new RoomCreationDTO("ROOM1", 4);
-        when(session.getAttribute("username")).thenReturn(testPlayer.getUsername());
+        when(session.getAttribute("username")).thenReturn(mockPlayer1.getUsername());
         when(roomRepository.findByRoomName(testRoomCreationDTO.getRoomName().toLowerCase())).thenReturn(Optional.of(mockRoom1));
-        
-        assertThrows(NameAlreadyExistsException.class, () -> roomService.createRoom(testRoomCreationDTO, session));
+
+        Room createdTestRoom = roomService.getOrCreateRoom(testRoomCreationDTO, session);
+
+        assertNotNull(createdTestRoom);
+        assertEquals(4, createdTestRoom.getDifficulty());
+        assertEquals("ROOM1", createdTestRoom.getRoomName());
+    }
+
+    @Test
+    void testCreateRoom_RoomExistsInvalidPerms() throws URISyntaxException {
+        String username = "Todd";
+        RoomCreationDTO testRoomCreationDTO = new RoomCreationDTO("ROOM1", 4);
+        when(session.getAttribute("username")).thenReturn(username);
+        when(roomRepository.findByRoomName(testRoomCreationDTO.getRoomName().toLowerCase())).thenReturn(Optional.of(mockRoom1));
+
+        assertThrows(InsufficientPermissionsException.class, () -> roomService.getOrCreateRoom(testRoomCreationDTO, session));
     }
 
     @Test
@@ -292,7 +306,7 @@ public class RoomServiceTest {
         RoomCreationDTO testRoomCreationDTO = new RoomCreationDTO("ROOM1", 4);
         when(session.getAttribute("username")).thenReturn(null);
         
-        assertThrows(NoUserFoundException.class, () -> roomService.createRoom(testRoomCreationDTO, session));
+        assertThrows(NoUserFoundException.class, () -> roomService.getOrCreateRoom(testRoomCreationDTO, session));
     }
 
     //TODO: submit guess, create guess, randompatterngenerator

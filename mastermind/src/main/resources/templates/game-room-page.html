@@ -595,9 +595,6 @@
             const feedbackBox = document.getElementById('feedback-box');
             feedbackBox.innerHTML = '<div class="feedback-entry">Welcome to the game! Click "Start Game" to begin, then enter your first guess above.</div>';
             
-            gameState.gameStarted = false;
-            gameState.gameCompleted = false;
-            
             document.getElementById('start-game-btn').classList.remove('disabled');
             document.getElementById('reset-game-btn').classList.add('disabled');
             document.getElementById('guess-input').disabled = true;
@@ -654,7 +651,7 @@
 
                     gameState.gameStarted = resetGameData.started;
                     gameState.gameCompleted = resetGameData.completed;
-                    gameState.remainingGuesses = 10;
+                    gameState.remainingGuesses = resetGameData.remainingGuesses;
                     
                     document.getElementById('guess-counter').textContent = gameState.remainingGuesses;
                     document.getElementById('game-status').textContent = 'Ready to Start';
@@ -680,16 +677,7 @@
 
         async function submitGuess() {
             clearError('guess-error');
-            
-            if (!gameState.gameStarted) {
-                showError('guess-error', 'Please start the game first');
-                return;
-            }
 
-            if (gameState.gameCompleted) {
-                showError('guess-error', 'Game is completed. Please reset to play again.');
-                return;
-            }
             
             const guessInput = document.getElementById('guess-input');
             const guess = guessInput.value.trim();

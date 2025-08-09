@@ -50,7 +50,7 @@ public class RoomController {
 
 
     @GetMapping("/{roomName}")
-    public ResponseEntity<PlayerRoomViewDTO> getRoom(@PathVariable String roomName, HttpSession session) {
+    public ResponseEntity<PlayerRoomViewDTO> getRoomPublic(@PathVariable String roomName, HttpSession session) {
         PlayerRoomViewDTO room = roomService.getRoomPublic(roomName.toLowerCase(), session);
         return ResponseEntity.ok(room);
     }
@@ -67,16 +67,18 @@ public class RoomController {
 
 
     @PatchMapping("/{roomName}")
-    public ResponseEntity<Room> updateRoom(@PathVariable String roomName, @RequestBody RoomUpdateDTO roomUpdate) throws URISyntaxException {
+    public ResponseEntity<PlayerRoomViewDTO> updateRoom(@PathVariable String roomName, @RequestBody RoomUpdateDTO roomUpdate) throws URISyntaxException {
         Room updatedRoom = roomService.updateRoom(roomName, roomUpdate);
-        return ResponseEntity.ok(updatedRoom);
+        PlayerRoomViewDTO newPlayerRoomView = roomService.roomToPlayerView(updatedRoom);
+        return ResponseEntity.ok(newPlayerRoomView);
     }
 
 
     @PostMapping("/create-room")
-    public ResponseEntity<Room> createRoom(@Valid @RequestBody RoomCreationDTO roomCreationDTO, HttpSession session) throws URISyntaxException {
+    public ResponseEntity<PlayerRoomViewDTO> createRoom(@Valid @RequestBody RoomCreationDTO roomCreationDTO, HttpSession session) throws URISyntaxException {
         Room newRoom = roomService.getOrCreateRoom(roomCreationDTO, session);
-        return ResponseEntity.status(HttpStatus.CREATED).body(newRoom);
+        PlayerRoomViewDTO newPlayerRoomView = roomService.roomToPlayerView(newRoom);
+        return ResponseEntity.status(HttpStatus.CREATED).body(newPlayerRoomView);
     }
 
 

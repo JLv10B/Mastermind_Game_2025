@@ -1,5 +1,6 @@
 package com.jl.mastermind.controller;
 
+import static com.jl.mastermind.util.AppConstants.RoomParameters.MAX_GUESSES;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -45,7 +46,7 @@ public class RoomControllerTest {
     private List<PlayerGuess> guessList = new ArrayList<>();
     private String roomName = "testroom";
     private ObjectMapper objectMapper = new ObjectMapper();
-    private PlayerRoomViewDTO playerRoomViewDTO = new PlayerRoomViewDTO("testroom", mockPlayer, 4, false, false, guessList);
+    private PlayerRoomViewDTO playerRoomViewDTO = new PlayerRoomViewDTO("testroom", mockPlayer, 4, false, false, MAX_GUESSES, guessList);
 
     @Test
     void testGetRoom_PublicView() throws Exception {

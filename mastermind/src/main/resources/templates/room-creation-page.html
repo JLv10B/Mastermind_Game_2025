@@ -521,7 +521,7 @@
                     // Update game state with room information
                     gameState.roomName = roomData.room_name;
                     gameState.difficulty = roomData.difficulty;
-                    
+                    gameState.remainingGuesses = roomData.remainingGuesses;
                     // Save updated state
                     saveGameState(gameState);
                     

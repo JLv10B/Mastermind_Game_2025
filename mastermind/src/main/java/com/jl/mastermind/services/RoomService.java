@@ -65,7 +65,8 @@ public class RoomService {
         if (roomOptional.isPresent()) {
             Room room = roomOptional.get();
             if (room.getHost().getUsername().equalsIgnoreCase(session.getAttribute("username").toString())) {
-                return new PlayerRoomViewDTO(roomName, room.getHost(), room.getDifficulty(), room.isStarted(), room.isCompleted(), room.getGuessList());
+                int remainingGuesses = MAX_GUESSES - room.getGuessList().size();
+                return new PlayerRoomViewDTO(roomName, room.getHost(), room.getDifficulty(), room.isStarted(), room.isCompleted(), remainingGuesses, room.getGuessList());
             } else {
                 throw new InsufficientPermissionsException("This is not your room");
             }
@@ -157,7 +158,7 @@ public class RoomService {
             List<PlayerGuess> guessList = updatedRoom.getGuessList();
             guessList.clear();
             roomRepository.saveRoom(updatedRoom);
-            return new PlayerRoomViewDTO(roomName, updatedRoom.getHost(), updatedRoom.getDifficulty(), updatedRoom.isStarted(), updatedRoom.isCompleted(), guessList);
+            return new PlayerRoomViewDTO(roomName, updatedRoom.getHost(), updatedRoom.getDifficulty(), updatedRoom.isStarted(), updatedRoom.isCompleted(), MAX_GUESSES, guessList);
         } else {
             throw new InvalidInputException("Unable to process input");
         }
@@ -270,6 +271,11 @@ public PlayerGuess createGuess(List<Integer> playerGuessArray, String playerGues
 
     feedback = String.format("You guessed %s. You got %d correct with %d in the correct %s. You have %d %s remaining. %s", playerGuessString, matchingNumbers, exactMatch, locationString, remainingGuesses, guessesString, gamestateString);
     return new PlayerGuess(playerGuessString, correctGuess, feedback, remainingGuesses);
+}
+
+public PlayerRoomViewDTO roomToPlayerView(Room room) {
+    int remainingGuesses = MAX_GUESSES - room.getGuessList().size();
+    return new PlayerRoomViewDTO(room.getRoomName(), room.getHost(), room.getDifficulty(), room.isStarted(), room.isCompleted(), remainingGuesses, room.getGuessList());
 }
     
 

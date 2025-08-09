@@ -31,14 +31,16 @@ public class PlayerRoomViewDTO {
 
     private boolean started;
     private boolean completed;
+    private int remainingGuesses;
     private List<PlayerGuess> guessList;
     
-    public PlayerRoomViewDTO(String roomName, Player host, int difficulty, boolean started, boolean completed, List<PlayerGuess> guessList) {
+    public PlayerRoomViewDTO(String roomName, Player host, int difficulty, boolean started, boolean completed, int remainingGuesses, List<PlayerGuess> guessList) {
         this.roomName = roomName;
         this.host = host;
         this.difficulty = difficulty;
         this.started = started;
         this.completed = completed;
+        this.remainingGuesses = remainingGuesses;
         this.guessList = guessList;
     }
     

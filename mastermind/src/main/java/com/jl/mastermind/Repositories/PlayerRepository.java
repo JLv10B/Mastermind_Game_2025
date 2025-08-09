@@ -24,17 +24,21 @@ public class PlayerRepository {
         return playerMap;
     }
 
-    public Player createPlayer (Player newPlayer) {
+    public Player createPlayer(Player newPlayer) {
         playerMap.put(newPlayer.getUsername().toLowerCase(), newPlayer);
         return newPlayer;
     }
 
-    public boolean deletePlayer (String targetPlayer) {
+    public boolean deletePlayer(String targetPlayer) {
         if (playerMap.containsKey(targetPlayer.toLowerCase())) {
             playerMap.remove(targetPlayer.toLowerCase());
             return true;
         } else {
             return false;
         }
+    }
+
+    public void deleteAll() {
+        playerMap.clear();
     }
 }

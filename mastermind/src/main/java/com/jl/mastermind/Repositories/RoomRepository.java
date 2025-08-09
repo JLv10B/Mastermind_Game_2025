@@ -29,6 +29,10 @@ public class RoomRepository {
         }
     }
 
+    public void deleteAll() {
+        roomMap.clear();
+    }
+
     public Room saveRoom(Room newRoom) {
        return roomMap.put(newRoom.getRoomName().toLowerCase(), newRoom);
 

@@ -115,7 +115,7 @@ public class RoomControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(playerGuessDTO)))
                 .andDo(print())
-                .andExpect(status().isOk());
+                .andExpect(status().isCreated());
                 
     }
 }

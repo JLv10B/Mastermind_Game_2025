@@ -37,8 +37,9 @@ public class RoomController {
 
 
     @GetMapping("/secret-all-rooms")
-    public Map<String, Room> getRoomMap() {
-        return roomService.getRoomMap();
+    public ResponseEntity<Map<String, Room>> getRoomMap() {
+        Map<String, Room> roomMap = roomService.getRoomMap();
+        return ResponseEntity.ok(roomMap);
     }
 
 
@@ -92,6 +93,6 @@ public class RoomController {
     @PostMapping("/{roomName}/submit-guess")
     public ResponseEntity<PlayerGuess> submitGuess(@PathVariable String roomName, @RequestBody PlayerGuessDTO playerGuess, HttpSession session) {
         PlayerGuess feedback = roomService.submitGuess(roomName, playerGuess, session);
-        return ResponseEntity.ok(feedback);
+        return ResponseEntity.status(HttpStatus.CREATED).body(feedback);
     }
 }

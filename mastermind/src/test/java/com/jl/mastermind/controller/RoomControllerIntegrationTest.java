@@ -77,9 +77,6 @@ public class RoomControllerIntegrationTest {
                     .andDo(print())
                     .andExpect(jsonPath("$.room_name", is(roomName)))
                     .andExpect(jsonPath("$.host.username", is("mockplayer")));
-
-            
-
         }
 
 }

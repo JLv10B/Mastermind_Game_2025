@@ -113,13 +113,13 @@ The application features single-player gameplay against the computer with multip
 4. mvn clean install
 5. mvn spring-boot:run
 6. Access the Application: http://localhost:8080
-7. API Documentation: http://localhost:8080/swagger-ui.html
 
 * The application uses the following default ports:
   * Spring Boot: 8080
   * PostgreSQL: 5432
   * Redis: 6379
 
+API Documentation: http://localhost:8080/swagger-ui.html
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 

@@ -52,7 +52,7 @@
       </ul>
     </li>
     <li><a href="#usage">Usage</a></li>
-    <li><a href="#codestructure">Codestructure</a></li>
+    <li><a href="#code-structure">Codestructure</a></li>
     <li><a href="#roadmap">Roadmap</a></li>
   </ol>
 </details>
@@ -76,20 +76,22 @@ This project focuses on building robust backend infrastructure for a Mastermind 
 
 ### Built With
 
+**Core Framework:**
 * Java 21
 * Spring Boot 4.0.0-M1
-* Spring Web MVC
-* Spring Data JPA
-* Spring Session
-* Spring Cloud Gateway
-* Spring Boot Validation
-* Postgres
+
+**Database & Storage:**
+* PostgreSQL
 * Redis
-* H2 Database
-* Thymeleaf
+* H2 Database (testing)
+
+**Documentation & Testing:**
 * SpringDoc OpenAPI
-* Lombok
 * JUnit 5
+
+**Build & Deployment:**
+* Maven
+* Docker
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 

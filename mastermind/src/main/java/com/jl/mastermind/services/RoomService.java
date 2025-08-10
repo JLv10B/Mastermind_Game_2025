@@ -92,16 +92,6 @@ public class RoomService {
     }
 
 
-    private boolean adminDeleteRoom(String roomName) {
-        Optional<Room> roomOptional = roomRepository.findByRoomName(roomName.toLowerCase());
-        if (roomOptional.isPresent()) {
-            return roomRepository.deleteRoom(roomName.toLowerCase());
-        } else {
-            throw new ResourceNotFoundException(roomName + " not found");
-        }
-    }
-
-
     public Room updateRoom(String roomName, RoomUpdateDTO roomUpdateDTO) throws URISyntaxException {
         Room updatedRoom = getRoom(roomName);
         if (updatedRoom.isStarted() == true) {
@@ -124,6 +114,9 @@ public class RoomService {
     public Room getOrCreateRoom(RoomCreationDTO roomCreationDTO, HttpSession session) throws URISyntaxException {
         if (session.getAttribute("username") == null) {
             throw new NoUserFoundException("No username found, unable to create a room");
+        }
+        if (roomCreationDTO.getRoomName().length() < 5 || roomCreationDTO.getRoomName().length() > 100) {
+            throw new InvalidInputException("Room name not long enough");
         }
         Optional<Room> roomOptional = roomRepository.findByRoomName(roomCreationDTO.getRoomName().toLowerCase());
         if (roomOptional.isPresent()) {

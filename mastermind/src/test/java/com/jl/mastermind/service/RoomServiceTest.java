@@ -315,6 +315,24 @@ public class RoomServiceTest {
     }
 
     @Test
+    void testCreateRoom_RoomNameTooShort() throws URISyntaxException {
+        String username = "Todd";
+        RoomCreationDTO testRoomCreationDTO = new RoomCreationDTO("", 4);
+        when(session.getAttribute("username")).thenReturn(username);
+        
+        assertThrows(InvalidInputException.class, () -> roomService.getOrCreateRoom(testRoomCreationDTO, session));
+    }
+
+    @Test
+    void testCreateRoom_RoomNameTooLong() throws URISyntaxException {
+        String username = "Todd";
+        RoomCreationDTO testRoomCreationDTO = new RoomCreationDTO("Ruahfawlefiawefawelifaweiufahwelfiuawhefliuaehflaieufaheifluaefiauwelfiauhaleifuahleifuahelifuahelifuahelfiauehflaiuhfalieufhaleiufhaleiufhalieufahleiufhaleiufhaleiufahlefiuahelfaiuefhaliuehfaleiufhaleiufahleiufhaelfiuaehflaiuefhlaieu;oaij;ewfoija;eoifja;eoifaj;eowifaj;eofiaje;ofiaje;faoiwejf;aowiefja;woeifjaw;eoifajwe;ofiawje;foiawejf;oawiejf;awoeifja;woefijaw;eoifajwe;ofiajwe;ofiajw;eofiajw;eofifhalieufhaleiufhaleifuahlef", 4);
+        when(session.getAttribute("username")).thenReturn(username);
+        
+        assertThrows(InvalidInputException.class, () -> roomService.getOrCreateRoom(testRoomCreationDTO, session));
+    }
+
+    @Test
     void testSubmitGuess_ValidAndCorrect() {
         String roomName = mockStartedRoom.getRoomName();
         PlayerGuessDTO playerGuessDTO = new PlayerGuessDTO("1234");

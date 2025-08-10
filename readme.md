@@ -52,7 +52,6 @@
       </ul>
     </li>
     <li><a href="#usage">Usage</a></li>
-    <li><a href="#datastructure">Datastructure</a></li>
     <li><a href="#codestructure">Codestructure</a></li>
     <li><a href="#roadmap">Roadmap</a></li>
   </ol>
@@ -63,9 +62,13 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
+
 The Mastermind app is a web-based implementation of the classic code-breaking game where players attempt to crack a randomly generated number combination, known as the master code. After each guess, the computer provides helpful feedback indicating how many numbers are correct and how many are in the exact right position. Players have 10 attempts to guess the correct combination and win the game.
 
 The application features single-player gameplay against the computer with multiple difficulty levels to choose from. Additionally, it includes leaderboard functionality that tracks and displays the players with the most wins at each difficulty level.
+
+This project focuses on building robust backend infrastructure for a Mastermind game, providing a well-structured API that enables frontend engineers to easily integrate and build user interfaces on top of it. The codebase emphasizes readability and modularity, making it straightforward to debug and extend with additional features. By prioritizing maintainability, the architecture allows new developers to contribute effectively with minimal onboarding time. Beyond the core game mechanics, a competitive scoreboard tracks user wins by difficulty level, adding an engaging element to the classic gameplay. The project also includes a comprehensive API specification that documents all available endpoints for easy integration
+
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -112,14 +115,14 @@ The application features single-player gameplay against the computer with multip
 3. docker-compose up
 4. mvn clean install
 5. mvn spring-boot:run
-6. Access the Application: http://localhost:8080
-7. API Documentation: http://localhost:8080/swagger-ui.html
+6. Access the Application through your browser: http://localhost:8080
 
 * The application uses the following default ports:
   * Spring Boot: 8080
   * PostgreSQL: 5432
   * Redis: 6379
 
+* API Documentation: http://localhost:8080/swagger-ui.html
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -146,6 +149,40 @@ Game Play
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
+## Codestructure
+
+### Core Components
+
+- **`/config`** - Application configuration
+  - `WebConfig.java` - CORS configuration enabling frontend integration
+
+- **`/controllers`** - API endpoints and request handling
+  - `GameController.java` - Game-related API endpoints and template rendering
+  - `PlayerController.java` - Player CRUD operations
+  - `PlayerScoreController.java` - Scoreboard CRUD operations
+  - `RoomController.java` - Room CRUD operations
+  
+- **`/dto`** - Data transfer objects for client-server communication
+  - `PlayerGuessDTO.java` - Player's guess submission
+  - `PlayerRoomViewDTO.java` - Room information sent to player (excludes secret code)
+  - `RoomCreationDTO.java` - Room creation request data
+  - `RoomUpdateDTO.java` - Room update, start, and reset operations
+  
+- **`/entities`** - JPA entities and data models
+  - `Player.java` - Player data
+  - `PlayerGuess.java` - Stores player guesses with correct/position feedback
+  - `PlayerScore.java` - Player scores by difficulty level
+  - `Room.java` - Room configuration, mastercode, and current game progress
+
+- **`/services`** - Business logic and game mechanics
+  - `PlayerScoreService.java` -  Tracks and retrieves player win statistics
+  - `PlayerService.java` - Manages player accounts and sessions
+  - `RoomService.java` - Creates rooms, validates guesses, generates mastercode
+
+- **`/utils`** - Utility classes and constants
+  - `AppConstants.java` - Application constants
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
 <!-- ROADMAP -->

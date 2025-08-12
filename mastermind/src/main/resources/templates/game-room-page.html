@@ -373,7 +373,7 @@
 
                         <div class="controls">
                             <button id="start-game-btn" onclick="startGame()">Start Game</button>
-                            <button id="reset-game-btn" onclick="resetGame()" class="disabled">Reset Game</button>
+                            <button id="reset-game-btn" onclick="resetGame()">Reset Game</button>
                         </div>
                     </div>
                     
@@ -596,7 +596,6 @@
             feedbackBox.innerHTML = '<div class="feedback-entry">Welcome to the game! Click "Start Game" to begin, then enter your first guess above.</div>';
             
             document.getElementById('start-game-btn').classList.remove('disabled');
-            document.getElementById('reset-game-btn').classList.add('disabled');
         }
 
         async function startGame() {
@@ -615,7 +614,6 @@
                 if (response.ok) {
                     gameState.gameStarted = true;
                     document.getElementById('game-status').textContent = 'In Progress';
-                    document.getElementById('start-game-btn').classList.add('disabled');
                     document.getElementById('reset-game-btn').classList.remove('disabled');
                     document.getElementById('guess-input').disabled = false;
                     document.getElementById('guess-input').focus();
@@ -655,7 +653,6 @@
                     document.getElementById('guess-counter').textContent = gameState.remainingGuesses;
                     document.getElementById('game-status').textContent = 'Ready to Start';
                     document.getElementById('start-game-btn').classList.remove('disabled');
-                    document.getElementById('reset-game-btn').classList.add('disabled');
                     document.getElementById('guess-input').disabled = true;
                     document.getElementById('guess-input').value = '';
                     clearError('guess-error');

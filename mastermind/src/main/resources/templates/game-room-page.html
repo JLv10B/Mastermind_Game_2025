@@ -608,12 +608,10 @@
                     },
                     credentials: 'include',
                     body: JSON.stringify({
-                        started: true
                     })
                 });
                 
                 if (response.ok) {
-                    gameState.gameStarted = true;
                     document.getElementById('game-status').textContent = 'In Progress';
                     document.getElementById('start-game-btn').classList.add('disabled');
                     document.getElementById('reset-game-btn').classList.remove('disabled');
@@ -641,7 +639,6 @@
                     },
                     credentials: 'include',
                     body: JSON.stringify({
-                        resetMastercode: true
                     })
                 });
                 
@@ -656,7 +653,6 @@
                     document.getElementById('game-status').textContent = 'Ready to Start';
                     document.getElementById('start-game-btn').classList.remove('disabled');
                     document.getElementById('reset-game-btn').classList.add('disabled');
-                    document.getElementById('guess-input').disabled = true;
                     document.getElementById('guess-input').value = '';
                     clearError('guess-error');
                     
@@ -735,11 +731,9 @@
             feedbackBox.appendChild(feedbackEntry);
             feedbackBox.scrollTop = feedbackBox.scrollHeight;
             
-            if (gameState.gameCompleted === true) {
                 document.getElementById('game-status').textContent = 'Won!';
                 refreshScoreboards();
             } else if (gameState.remainingGuesses <= 0) {
-                gameState.gameCompleted = true;
                 document.getElementById('game-status').textContent = 'Lost';
                 refreshScoreboards();
             }

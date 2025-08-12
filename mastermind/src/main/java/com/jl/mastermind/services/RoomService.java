@@ -37,6 +37,7 @@ public class RoomService {
     private final PlayerService playerService;
     private final RoomRepository roomRepository;
     private final PlayerScoreService playerScoreService;
+    private Thread timeThread;
 
     public RoomService(RoomRepository roomRepository, PlayerService playerService, PlayerScoreService playerScoreService) {
         this.roomRepository = roomRepository;
@@ -313,6 +314,7 @@ public class RoomService {
         }
 
         return playerGuess;
+        
     }
 
     /**

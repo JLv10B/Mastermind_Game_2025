@@ -22,4 +22,5 @@ public class PlayerScore {
     private String username;
     private int score;
     private int difficulty;
+    private Long persaonlRecordTime;
 }

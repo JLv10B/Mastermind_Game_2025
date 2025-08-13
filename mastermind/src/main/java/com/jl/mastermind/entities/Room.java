@@ -32,6 +32,8 @@ public class Room {
     private boolean completed;
     private String mastercode;
     private List<PlayerGuess> guessList;
+    private Long startTime;
+    private Long endTime;
     
     public Room(String roomName, Player host, int difficulty, boolean started, boolean completed, String mastercode, List<PlayerGuess> guessList) {
         this.roomName = roomName;
@@ -41,6 +43,8 @@ public class Room {
         this.completed = completed;
         this.mastercode = mastercode;
         this.guessList = guessList;
+        this.startTime = 0L;
+        this.endTime = 0L;
     }
     
 }

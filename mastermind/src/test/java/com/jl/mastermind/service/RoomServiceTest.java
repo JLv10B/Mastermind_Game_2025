@@ -240,6 +240,24 @@ public class RoomServiceTest {
     }
 
     @Test
+    void testUpdateRoom_setStartedValidAndSetStartTime() throws URISyntaxException {
+        String roomName = mockRoom1.getRoomName();
+        RoomUpdateDTO roomUpdateDTO = new RoomUpdateDTO(null, true, null);
+        when(roomRepository.findByRoomName(roomName.toLowerCase())).thenReturn(Optional.of(mockRoom1));
+        when(roomRepository.saveRoom(mockRoom1)).thenReturn(mockRoom1);
+
+        Room updatedRoom = roomService.updateRoom(roomName, roomUpdateDTO);
+
+        assertNotNull(updatedRoom);
+        assertEquals(4, updatedRoom.getDifficulty());
+
+        assertEquals(true, updatedRoom.isStarted());
+        assertEquals("1234", updatedRoom.getMastercode());
+        // assertEquals(, updatedRoom); TODO: fix this test
+        verify(roomRepository, times(1)).saveRoom(updatedRoom);
+    }
+
+    @Test
     void testResetRoom_Valid() throws URISyntaxException {
         String roomName = mockRoom1.getRoomName();
         String roomHost = mockRoom1.getHost().getUsername();
@@ -465,5 +483,11 @@ public class RoomServiceTest {
 
         assertEquals(difficulty, mastercode.length());
     }
+
+    // @Test
+    // void testStartGame_SetStartTime() {
+    //     RoomUpdateDTO updateDTO = new RoomUpdateDTO(null, true, null);
+    //     when
+    // }
 
 }

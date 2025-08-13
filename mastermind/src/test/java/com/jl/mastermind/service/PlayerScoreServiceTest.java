@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -59,5 +60,14 @@ public class PlayerScoreServiceTest {
 
         assertNotNull(foundScores);
         assertEquals(mockPlayerScores, foundScores);
+    }
+
+    @Test
+    void testRetrievePersonalRecord() {
+        PlayerScore newPlayerScore = PlayerScore.builder().username("tesuser").score(1).difficulty(4).persaonlRecordTime(5000L).build();
+
+        when(playerScoreRepository.findByUsernameAndDifficulty("tesuser", 4)).thenReturn(Optional.of(newPlayerScore));
+
+        assertEquals(5000L, newPlayerScore.getPersaonlRecordTime());
     }
 }

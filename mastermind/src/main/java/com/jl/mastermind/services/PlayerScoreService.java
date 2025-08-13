@@ -87,13 +87,17 @@ public class PlayerScoreService {
      * @return the updated PlayerScore object with the incremented score
      * @throws ResourceNotFoundException if no score is found for the specified username and difficulty combination
      */
-    public PlayerScore updatePlayerScore(String username, int difficulty) {
+    public PlayerScore updatePlayerScore(String username, int difficulty, Long gameDuration) {
         Optional<PlayerScore> updatedPlayerScoreOptional = playerScoreRepository.findByUsernameAndDifficulty(username, difficulty);
         if (!updatedPlayerScoreOptional.isPresent()) {
             throw new ResourceNotFoundException("Score not found");
         }
         PlayerScore updatedPlayerScore = updatedPlayerScoreOptional.get();
         updatedPlayerScore.setScore(updatedPlayerScore.getScore() + 1);
+        Long previousPR = updatedPlayerScore.getPersaonlRecordTime();
+        if (gameDuration < previousPR || previousPR == 0L) {
+            updatedPlayerScore.setPersaonlRecordTime(gameDuration);
+        }
         return playerScoreRepository.save(updatedPlayerScore);
 
     }

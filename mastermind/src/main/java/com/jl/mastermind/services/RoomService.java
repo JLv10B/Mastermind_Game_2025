@@ -157,6 +157,7 @@ public class RoomService {
         } 
         if (roomUpdateDTO.getStarted() != null) {
             updatedRoom.setStarted(roomUpdateDTO.getStarted());
+            updatedRoom.setStartTime(System.currentTimeMillis());
         }
         return roomRepository.saveRoom(updatedRoom);
     }
@@ -233,6 +234,8 @@ public class RoomService {
             updatedRoom.setCompleted(false);
             List<PlayerGuess> guessList = updatedRoom.getGuessList();
             guessList.clear();
+            updatedRoom.setStartTime(0L);
+            updatedRoom.setEndTime(0L);
             roomRepository.saveRoom(updatedRoom);
             return new PlayerRoomViewDTO(roomName, updatedRoom.getHost(), updatedRoom.getDifficulty(), updatedRoom.isStarted(), updatedRoom.isCompleted(), MAX_GUESSES, guessList);
         } else {
@@ -305,7 +308,10 @@ public class RoomService {
         
         if (playerGuess.isCorrectGuess()) {
             room.setCompleted(true);
-            playerScoreService.updatePlayerScore(room.getHost().getUsername(), room.getDifficulty());
+            room.setEndTime(System.currentTimeMillis());
+            Long gameDuration = room.getEndTime() - room.getStartTime();
+            playerScoreService.updatePlayerScore(room.getHost().getUsername(), room.getDifficulty(), gameDuration);
+
         }
 
         if(remainingGuesses <= 0) {
